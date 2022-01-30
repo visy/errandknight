@@ -1096,7 +1096,7 @@ sintab = {}
 costab = {}
 
 function inittab()
-	for a=0,360,8 do
+	for a=0,360,6 do
 
 	 local ray={
 	   angle=a/360,
@@ -1112,9 +1112,11 @@ end
 pchangex = -1
 updateframes = 0
 function updateshadow()
+	plx = player.x/8
+	ply = player.y/8
 
- px=flr(player.x/8)*8
- py=flr(player.y/8)*8
+ px=flr(plx)*8
+ py=flr(ply)*8
 
 	if (pchangex == px and pchangey == py) then
 		updateframes=0
@@ -1128,9 +1130,9 @@ function updateshadow()
 	
 
 	shatab = {}
-	ray_step=8
+	ray_step=1
 
-	for a=0,360,8 do
+	for a=0,360,6 do
 	
 	 local ray={
 	   x = px,
@@ -1145,8 +1147,8 @@ function updateshadow()
   local distance=0
 
   -- reset ray start point
-  ray.x = player.x
-  ray.y = player.y
+  ray.x = plx
+  ray.y = ply
 
   local distance=0
   -- cast a ray across the
@@ -1157,9 +1159,10 @@ function updateshadow()
    ray.x+=step_x       
    ray.y+=step_y
    distance+=ray_step
-   if (distance > 64) then distbail = true end
+   if (distance > 8) then distbail = true end
    -- get tile at ray position
-			flag = solid(flr(ray.x/8)*8,flr(ray.y/8)*8)
+			tile = mget(ray.x,ray.y)
+			flag = fget(tile,0)
 	 until(flag==true or distbail==true)
 
 		if(distbail == false) then
@@ -1169,9 +1172,9 @@ function updateshadow()
 			for i=0,8 do
 	   ray.x+=step_x
 	   ray.y+=step_y
-	   xi = flr(ray.x/8)
-	   yi = flr(ray.y/8)
-				sha = {x=xi,y=yi,d=i+1}
+	   xi = ray.x
+	   yi = ray.y
+				sha = {x=xi,y=yi,d=i}
 				add(shatab,sha)
 			end
 		end
