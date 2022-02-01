@@ -1233,10 +1233,13 @@ function drawshadow()
 
 	palt(1,true)
 	palt(0,false)
+
+	xo = player.x%8
+	yo = player.y%8
 	
 	for i=1,#shatab do
 		s = shatab[i]
-		spr(119-(6-s.d),s.x*8,s.y*8)
+		spr(119-(6-s.d),xo+s.x*8,yo+s.y*8)
 	end
 
 
