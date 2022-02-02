@@ -5,7 +5,7 @@ gravity=0.1
 intro = 1
 cheat = 0
 
-player = { x = 8*3, y = 0, walk = 0, dir = 1, attack = 0, atime = 0, 
+player = { x = 8*3, y = -512, walk = 0, dir = -1, attack = 0, atime = 0, 
 weapon = 5, aspeed = 3, acooldown = 24, acooltimer = 0, hb_x = 9, hb_y = 1, hb_s = 11, hp = 100, maxhp = 100, w = 9, h = 17, xv=0,yv=0,jumpheight=2,speed=0.8,friction=0.5,iframes=0,
 moveframes=0,totalsouls = 0,souls=0, level=1,dead = false,deathframes=0,keys=0,
 onladder=false,prevladder=false
@@ -103,6 +103,7 @@ function _init()
 	initdoors()
 	initenemies()
 	inittab()
+
 	music(0,500)
 
 	
@@ -166,7 +167,7 @@ function physics(po,isplayer)
 	end
 
 
-	if (isplayer == true) then
+	if (isplayer == true and player.y > 0) then
 	 po.xv+=(btnf(1)-btnf(0))*po.speed
  end
 
@@ -401,44 +402,52 @@ function ai(enemy)
   	enemy.jumptrigger = true
   end
 	elseif(bh == bh_wallhug) then
-		ma = 1
-		ss=1
-		s = solid(enemy.x-ma,enemy.y-ma)
-		if (s == false and enemy.dir != 1 and enemy.dir != 2 and enemy.dir != 3) then
-			enemy.dir = 0
-		else
-			s = solid(enemy.x,enemy.y-(8+ma))
-			if (s == false and enemy.dir != 2 and enemy.dir != 3) then
-				enemy.dir = 1
-			else
-				s = solid(enemy.x+(8+ma),enemy.y+ma)
-				if (s == false and enemy.dir != 3 and enemy.dir != 0) then
-					enemy.dir = 2
-				else
-					s = solid(enemy.x,enemy.y)
-					if (s == false and enemy.dir != 0 and enemy.dir != 1) then
-					enemy.dir = 3
-					end
-				end
+		speedc = flr(rnd(256))
+		if (speedc < 2) then
+			enemy.speed = 0.2+rnd(0.5)
+		end
+		ox = 0
+		oy = 0
+		if (enemy.xdir > 0) then
+			ox = 8
+		end
+		if (enemy.ydir > 0) then
+			oy = 8
+		end
+		ex = flr((enemy.x+ox)/8)
+		ey = flr((enemy.y+oy)/8)
+
+
+		xs = enemy.xdir*enemy.speed
+		ys = enemy.ydir*enemy.speed
+	
+		w = fget(mget(ex,ey),0) or fget(mget(ex,ey),6)
+
+		if (w == true) then
+			enemy.x-=enemy.xdir*enemy.speed
+ 		enemy.y-=enemy.ydir*enemy.speed
+
+			if(enemy.xdir == -1) then
+				enemy.xdir = 0
+				enemy.ydir = -1
+			elseif(enemy.xdir == 1) then
+				enemy.xdir = 0
+				enemy.ydir = 1
+			elseif(enemy.ydir == -1) then
+				enemy.xdir = 1
+				enemy.ydir = 0
+			elseif(enemy.ydir == 1) then
+				enemy.xdir = -1
+				enemy.ydir = 0
 			end
+			
+
+		else
+
+			enemy.x+=enemy.xdir*enemy.speed
+			enemy.y+=enemy.ydir*enemy.speed
 		end
-
-		if (s==true and enemy.dir == 3) then
-			enemy.dir=0
-
-		end
-
-
-		if (enemy.dir == 0) then
-			enemy.x-=enemy.speed*ss
-		elseif (enemy.dir == 1) then
-			enemy.y-=enemy.speed*ss
-
-		elseif (enemy.dir == 2) then
-			enemy.x+=enemy.speed*ss
-		elseif (enemy.dir == 3) then
-			enemy.y+=enemy.speed*ss
-		end
+		
 
 	end
 	
@@ -808,9 +817,10 @@ function initenemies()
 												w = 4,
 												h = 4,
 												hp = 50,
-												dir = 0,
+												xdir = -1,
+												ydir = 0,
 												jumpheight=0,
-												speed=0.2,
+												speed=0.8,
 												friction=0.1,
 												bh=bh_wallhug,
 												souls=12,
@@ -879,8 +889,22 @@ function drawenemies()
 					pal(9,16-enemy.iframes*2,0)
 					pal(10,15-enemy.iframes*2,0)
 				end
-				rspr(100+enemy.aframe%4,enemy.x,enemy.y,enemy.dir*90,1,1)
-			--	print(enemy.dir,enemy.x,enemy.y,7)
+				if (enemy.xdir != -0) then
+				a = 0
+				if (enemy.xdir == 1) then
+				a = 180
+				end
+
+				rspr(100+enemy.aframe%4,enemy.x,enemy.y,a,1,1)
+				end
+				if (enemy.ydir != -0) then
+				a = 90
+				if (enemy.ydir == 1) then
+				a = 270
+				end
+				rspr(100+enemy.aframe%4,enemy.x,enemy.y,a,1,1)
+				end
+--				print(enemy.wall,enemy.x,enemy.y,7)
 			pal()
 			end
 
@@ -929,7 +953,7 @@ function drawenemies()
 end
 
 function pushtarget(pusher,target,hit)
-	force = pusher.xv*100
+	force = 10
 	if (hit == true) then 
 		force = 20*player.dir
 	end
@@ -1076,8 +1100,8 @@ function drawlevel()
 	-- parallax pattern
 	camera()
 
-	for y=-1,14,2 do
-	for x=-1,16,2 do 
+	for y=-2,14,2 do
+	for x=-2,16,2 do 
  
  	sx = flr((player.x-64)/8)+x
  	sy = flr((player.y-64)/8)+y
@@ -1085,17 +1109,9 @@ function drawlevel()
  	xo = -player.x/4%16
  	yo = -player.y/32%16
 
-
- 
-
-		if(mget(sx,sy) == tile_bg) then 
-			dx=flr(xo+x*8)
-			dy=flr(yo+y*8)
-			spr(46,-8+dx,dy,2,2)
-			spr(46,-8+dx-16,dy,2,2)
-			spr(46,-8+dx,dy-16,2,2)
-			spr(46,-8+dx,dy+16,2,2)
-		end
+		dx=flr(xo+x*8)
+		dy=flr(yo+y*8)
+		spr(46,dx,dy,2,2)
 
 		pal()
 	end
@@ -1106,7 +1122,8 @@ function drawlevel()
 
 	drawspawners()
 	--solid and stairs
-	map(0,0,0,0,128,128,1 + 4)
+	map(0,0,0,0,128,128,1)
+	map(0,0,0,0,128,128,3)
 end
 
 function printc(s,y,c)
@@ -1257,7 +1274,6 @@ function drawitems()
 	end
 end
 
-shatab = {}
 sintab = {}
 costab = {}
 
@@ -1277,12 +1293,13 @@ end
 
 pchangex = -1
 updateframes = 0
-function updateshadow()
-	plx = player.x/8
-	ply = player.y/8
 
- px=flr(plx)*8
- py=flr(ply)*8
+function updateshadow()
+	plx = flr((player.x)/8)
+	ply = flr((player.y)/8)
+
+ px=plx
+ py=ply
 
 	if (pchangex == px and pchangey == py) then
 		updateframes=0
@@ -1293,10 +1310,9 @@ function updateshadow()
 
 	pchangex = px
 	pchangey = py
-	
 
-	shatab = {}
 	ray_step=1
+	memset(0x9000,112,512)
 
 	for a=0,360,6 do
 	
@@ -1327,21 +1343,25 @@ function updateshadow()
    distance+=ray_step
    if (distance > 8) then distbail = true end
    -- get tile at ray position
-			tile = mget(ray.x,ray.y)
+			tile = mget(flr(ray.x),flr(ray.y))
 			flag = fget(tile,0)
 	 until(flag==true or distbail==true)
 
-		if(distbail == false) then
-	   ray.x+=step_x
-	   ray.y+=step_y
+		if(distbail == false and distance > 1) then
+			 ray.x+=step_x
+			 ray.y+=step_y
 
-			for i=0,8 do
-	   ray.x+=step_x
-	   ray.y+=step_y
-	   xi = ray.x
-	   yi = ray.y
-				sha = {x=xi,y=yi,d=i}
-				add(shatab,sha)
+			for i=0,7 do
+	   xi = flr(ray.x)-plx+8
+	   yi = flr(ray.y)-ply+9
+			 ray.x+=step_x
+			 ray.y+=step_y
+
+				dv = peek(0x9000+(yi*16)+xi)
+				dv+=2
+				if (dv > 124) then dv = 124 end
+				poke(0x9000+(yi*16)+xi,dv)
+
 			end
 		end
  end
@@ -1349,7 +1369,6 @@ end
 
 of = 0
 function drawshadow()
-	camera(player.x-64,player.y-64)
 
 	palt(1,true)
 	palt(0,false)
@@ -1361,12 +1380,19 @@ function drawshadow()
 	
 	xo = (player.x%8)-pdd
 	yo = player.y%8
-	
-	for i=1,#shatab do
-		s = shatab[i]
-		spr(119-(6-s.d),xo+s.x*8,yo+s.y*8)
-	end
 
+ -- map to 0x80
+	poke(0x5f56, 0x90)
+	--alt map width
+	poke(0x5f57, 16)
+
+	-- draw shadowmap
+	map(0,0,player.x-64-xo,player.y-64-yo,16,16)
+
+	-- reset default map addr
+	poke(0x5f56, 0x20)
+	--default map width
+	poke(0x5f57, 128)
 
 	palt()
 	camera()
@@ -1374,7 +1400,6 @@ end
 
 function _draw()
 	cls(0)
-
 --	clip(player.x,player.y,player.x+32,player.y+32)
 	camera(player.x-64,player.y-64)
 	drawlevel()	
@@ -1397,12 +1422,15 @@ function _draw()
 	pal(12,armor[player.level])
 	drawhumanoid(player,1)
 
+	if (intro == 0) then
 	drawenemies()
 	drawitems()
 	drawtorch()
 	drawshadow()
 	drawdmg()
 	drawui()
+	end
+	camera()
 
 	if (gameover == 1) then
 		rectfill(0,120,128,128,0)
@@ -1417,6 +1445,10 @@ function _draw()
 		printc("success! found the exit!",123,10)
 		stop()
 	end
+
+		rectfill(0,0,128,8,0)
+		rectfill(0,0,8,128,0)
+		rectfill(120,0,128,128,0)
 	
 	if (intro == 1) then
 		for y=15,22 do
@@ -1431,9 +1463,10 @@ function _draw()
 			print  ("                      pumpuli",1,27,5)
 			print  ("                      pumpuli",1,28,8)
 		end
-		if (player.y > 32) then intro = 0 end
+		if (player.y > 24) then intro = 0 end
 	end
 	
+
 end
 __gfx__
 00000000000600005555555055555550000600600000000000000000000000000000000000000000000000090000000000000000000000000000000000000000
@@ -1484,22 +1517,22 @@ aaaaaaa0022222220222222202222222009a99007700000000000000220000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0288288008ee8ee00e22e22000000000000000000000000000000000000000000000000000000000000000000000000000000000000600600006006055555555
-28ee8e288e22e28ee28828e200000000000000000000000000000000000000000000000000000000000000000000000000000000006606600066066011111111
-28eeee288e22228ee28888e200000000000000000000000000000000000000000000000000000000000000000000000000000000006606600066066056100561
-28eeee288e22228ee28888e2000000000000000000000000000000000000000000000000000000000000000000000000000000000c66ccc50c66ccc556100561
-28eeee288e22228ee28888e2000000000000000009999000099000000000000000000000000000000000000000000000000000000ccccccc0ccccccc56100561
-028ee28008e228e00e288e20000000000999999009aa99909aa999900999990000000000000000000000000000000000000000000ccccccc0ccccccc56666661
-00282800008e8e0000e2e2000000000009aaaaa90099aaa9099aaa909aaaaa9000000000000000000000000000000000000000000ccccccc0ccccccc56100561
-000080000000e00000002000000000000099999900099990009999009999990000000000000000000000000000000000000000000cccccccffcccccc56100561
-1111111110111011011101110101010100010001000100010000000000000000000000000000000000000000000000000000000000cffffcffcffffc56100561
-11111111111011101010101010101010101010100100010000000000000000000000000000000000000000000000000000000000ff5555550055555556666661
-11111111101110111101110101010101010001000001000100000000000000000000000000000000000000000000000000000000ffcccccc00cccccc56100561
-1111111111101110101010101010101010101010010001000000000000000000000000000000000000000000000000000000000000cccccc00cccccc56100561
-11111111101110110111010101010101000100010001000100000000000000000000000000000000000000000000000000000000004444440044444456100561
-1111111111101110101011101010101010101010010001000000000000000000000000000000000000000000000000000000000000dd55dd00dd55dd56666661
-1111111110111011110101010101010101000100000100010000000000000000000000000000000000000000000000000000000000cc0055005500cc56100561
-11111111111011101010101110101010101010100100010000000000000000000000000000000000000000000000000000000000000000cc00cc000056100561
+0288288008ee8ee00e22e22000000000900090000900090009000000000900090000000000000000000000000000000000000000000600600006006055555555
+28ee8e288e22e28ee28828e200000000090000090000000900000090090000900000000000000000000000000000000000000000006606600066066011111111
+28eeee288e22228ee28888e200000000000990000009900090099000000990000000000000000000000000000000000000000000006606600066066056100561
+28eeee288e22228ee28888e200000000009aa900909aa900009aa909009aa90000000000000000000000000000000000000000000c66ccc50c66ccc556100561
+28eeee288e22228ee28888e200000000909aa900009aa900009aa900009aa90900000000000000000000000000000000000000000ccccccc0ccccccc56100561
+028ee28008e228e00e288e20000000000009900900099000000990000009900000000000000000000000000000000000000000000ccccccc0ccccccc56666661
+00282800008e8e0000e2e200000000000900000009000090900000909000000000000000000000000000000000000000000000000ccccccc0ccccccc56100561
+000080000000e00000002000000000000000009090009000000900090090009000000000000000000000000000000000000000000cccccccffcccccc56100561
+1111111111111111101110111011101101110111011101110101010101010101000100010001000100010001000100010000000000cffffcffcffffc56100561
+11111111111111111110111011101110101010101010101010101010101010101010101010101010010001000100010000000000ff5555550055555556666661
+11111111111111111011101110111011110111011101110101010101010101010100010001000100000100010001000100000000ffcccccc00cccccc56100561
+1111111111111111111011101110111010101010101010101010101010101010101010101010101001000100010001000000000000cccccc00cccccc56100561
+11111111111111111011101110111011011101010111010101010101010101010001000100010001000100010001000100000000004444440044444456100561
+1111111111111111111011101110111010101110101011101010101010101010101010101010101001000100010001000000000000dd55dd00dd55dd56666661
+1111111111111111101110111011101111010101110101010101010101010101010001000100010000010001000100010000000000cc0055005500cc56100561
+11111111111111111110111011101110101010111010101110101010101010101010101010101010010001000100010000000000000000cc00cc000056100561
 4f4ff7ffffff3f4ff74f0f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1fbfbfbfbf
 bfbfbfbfbfbfbf1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f
 4f4ff7ffffff3f4ff74f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f
@@ -1695,19 +1728,19 @@ __label__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 
 __gff__
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000101010100000000000000000000000001010101000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000000400000000000000000400000000000004
+0000000000000000000000000000000000000000000000000000000000000000000000000000000000000101010100000000000000000000000001010101000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000000c00000000000000000000000000000002
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001800101010101014040000100008000
 __map__
-f3f3f0f0f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f3f3f0fff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
 f3f3f0fff3f3f3f3f3f3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f3f3fffff3fffff3f3fffff3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f3f3fffff3fffff3f3fffff4f4f4f4f4f4f4f4f4f4f4f4f0f0f2f2f2f2f2f2f2f2f2f2f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f3f36ff3f3fffffffffffff4f4f4f4f4f4f4f4f4f4f4f4f0f0f2f2f2f2f2f2f2f2f2f2f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f0f07ff3f0fffcfffffffff3fffffffffffffffffff4f4f0f0fffffffffffffffff2f2f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f0f07ffff0f0f3f3f3f0f0f3fffffffffffffffffff4f4f0f0fffffffffffffffff2f2f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f3f3fffff3f3fff3f3fffff3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f3f3fffff3f3fff3f3fffff4f4f4f4f4f4f4f4f4f4f4f4f0f0f2f2f2f2f2f2f2f2f2f2f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f3f36ff3f3f3fffffffffff4f4f4f4f4f4f4f4f4f4f4f4f0f0f2f2f2f2f2f2f2f2f2f2f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f0f07ff3f0f3fffffffffff3fffffffffffffffffff4f4f0f0fffffffffffffffff2f2f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f0f07ffff0f3fff3f3f0f0f3fffffffffffffffffff4f4f0f0fffffffffffffffff2f2f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f0ff7ffff0f3f1f1f1f0f0f3fffffffffffffffffff4f4f0f0fffffffffffffffff2f2f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
 f0ff7ffff0f0f1f1f1f0f0f3fffffffffffffffffff4f4f0f0fffffffffffffffff2f2f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f0ff7ffff0f0f1f1f1f0f0f3fffffffffffffffffff4f4f0f0fffffffffffffffff2f2f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f0ff7ffff0f0f1fcf1f0f0f3fffffffffffffffffff4f4f0f0fffffffffffffffff2f2f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f0ff7ffff0f0f1fff1f0f0f3fffffffffffffffffff4f4f0f0fffffffffffffffff2f2f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
 f0f07ffff0f0f0f0f0f0f0f3fffffcfffcfffffffff4f4f0f0fffffffff2f26ffff2f2f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
 f0f07ffff0f0f0f0f0f0f0fffffff6f6f7f6fffffffffff8fffffffffff2f27ffff2f2f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
 f0ff7ffffffffffffffffffffffff6fffffffffffffffff9fffffff2f2f2f27ffff2f2f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
