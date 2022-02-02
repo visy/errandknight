@@ -2,7 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 35
 __lua__
 gravity=0.1
-intro = 1
+intro = 2
 cheat = 0
 
 player = { x = 8*3, y = -512, walk = 0, dir = -1, attack = 0, atime = 0, 
@@ -173,7 +173,7 @@ function physics(po,isplayer)
 
  po.xv*=po.friction
 
-	if ((btn(0) == true or btn(1) == true) and isplayer) then
+	if ((btn(0) == true or btn(1) == true) and isplayer and player.y > 0) then
 		if (po.xv>=0) then po.dir = 1
 		else po.dir = -1 end
 	end
@@ -1111,7 +1111,9 @@ function drawlevel()
 
 		dx=flr(xo+x*8)
 		dy=flr(yo+y*8)
+		if (sx >= -2 and sy >= -2) then
 		spr(46,dx,dy,2,2)
+		end
 
 		pal()
 	end
@@ -1398,8 +1400,17 @@ function drawshadow()
 	camera()
 end
 
+fadepal={12,14,8,13,3,4,5,2,1,0}
+
 function _draw()
 	cls(0)
+	if (intro == 2) then
+		ff = 1+(8-abs(flr(player.y*0.02)))
+		if (ff > 10) ff = 10
+		if (ff < 1) ff = 1
+		
+		if (player.y < 0) rectfill(0,0,128,128,fadepal[ff])
+	end
 --	clip(player.x,player.y,player.x+32,player.y+32)
 	camera(player.x-64,player.y-64)
 	drawlevel()	
@@ -1463,8 +1474,10 @@ function _draw()
 			print  ("                      pumpuli",1,27,5)
 			print  ("                      pumpuli",1,28,8)
 		end
-		if (player.y > 24) then intro = 0 end
 	end
+
+	if (player.y >= 0 and intro == 2) then intro = 1 end
+	if (player.y > 24 and intro == 1) then intro = 0 end
 	
 
 end
