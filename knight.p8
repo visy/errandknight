@@ -6,7 +6,7 @@ intro = 1
 cheat = 0
 
 player = { x = 8*3, y = 0, walk = 0, dir = 1, attack = 0, atime = 0, 
-weapon = 5, aspeed = 3, acooldown = 24, acooltimer = 0, hb_x = 9, hb_y = 1, hb_s = 11, hp = 10, maxhp = 10, w = 9, h = 17, xv=0,yv=0,jumpheight=2,speed=0.8,friction=0.5,iframes=0,
+weapon = 5, aspeed = 3, acooldown = 24, acooltimer = 0, hb_x = 9, hb_y = 1, hb_s = 11, hp = 100, maxhp = 100, w = 9, h = 17, xv=0,yv=0,jumpheight=2,speed=0.8,friction=0.5,iframes=0,
 moveframes=0,totalsouls = 0,souls=0, level=1,dead = false,deathframes=0,keys=0,
 onladder=false,prevladder=false
 }
@@ -96,9 +96,9 @@ end
 
 function _init()
 	if (cheat == 1) then
-		player.keys = 99
-		player.maxhp = 39
-		player.hp = 39
+--		player.keys = 99
+--		player.maxhp = 1
+--		player.hp = 39
 	end
 	initdoors()
 	initenemies()
@@ -552,7 +552,7 @@ function updateenemies()
 				checkweapon = collide_aabox(enemy_a_hitbox,player)
 			end
 			if ((collide_aabox(enemy,player) or checkweapon) and enemy.iframes == 0 and player.iframes == 0) then
-				player.hp-=1
+				player.hp-=enemy.dmg
 				player.iframes = 32
 				sfxi(5)
 				if (player.hp <= 0) then
@@ -575,11 +575,6 @@ function updateenemies()
 		enemy.x-=enemy.dx*3
 		end
 
-		if (player.yv > 0) then
-		enemy.y+=player.yv*3
-		else
-		enemy.y-=enemy.dy*3
-		end
 
 		dmg = 10
 		extra = 0
@@ -703,7 +698,8 @@ function updatespawners()
 											 speed=0.1+rnd(0.1),
 											 friction=0.4,
 											 bh=bh_patrol,
-											 souls=flr(hpval*1.25),acooldown=4
+											 souls=flr(hpval*1.25),acooldown=4,
+											 dmg = 10,
 										 }
 										 
 					enemy.type = enemy_slime
@@ -737,7 +733,7 @@ function updateitems()
 		tt = rmd[i].tt
 		deli(items,rmd[i].i)
 		if (tt == item_heart) then
-			player.hp+=2
+			player.hp+=5
 			if (player.hp>player.maxhp) then player.hp = player.maxhp end
 			sfxi(11)
 		elseif (tt == item_key) then
@@ -809,8 +805,8 @@ function initenemies()
 			enemy = {x = mx*8,
 												y = (my*8),
 					 						animspeed = 5, 
-												w = 8,
-												h = 8,
+												w = 4,
+												h = 4,
 												hp = 50,
 												dir = 0,
 												jumpheight=0,
@@ -818,7 +814,8 @@ function initenemies()
 												friction=0.1,
 												bh=bh_wallhug,
 												souls=12,
-												hb_x = 0, hb_y = 5, hb_s = 8
+												hb_x = 0, hb_y = 5, hb_s = 8,
+												dmg = 5
 												}
 
 			enemy.type = enemy_waller
@@ -839,7 +836,8 @@ function initenemies()
 									 souls=20, walk=0,
 									 attack = 0,dir=-1,
 									 weapon=37,acooldown=4,
-										hb_x = 14, hb_y = 1, hb_s = 4
+										hb_x = 14, hb_y = 1, hb_s = 4,
+										dmg = 25
 								 }
 
 
@@ -913,7 +911,7 @@ function drawenemies()
 					sfxi(8)
 					player.souls+=enemy.souls
 					player.totalsouls+=enemy.souls
-					if (player.totalsouls >= (player.level+player.level*1.33)*60) player.level+=1
+					if (player.totalsouls >= (player.level+player.level*1.5)*100) player.level+=1
 				end
 			end
 
@@ -1188,14 +1186,14 @@ function drawui()
 	rectfill(0,120,128,128,0)
 	
 	--hp
-	for i=1,player.maxhp do
+	for i=1,player.maxhp,5 do
 		h = "█"
 		e = "…"
 	
 	 if (i <= player.hp) then
-			print(h,-2+(i-1)*4,122,8)
+			print(h,-2+(i/10-1)*4,122,8)
 		else
-			print(e,-2+(i-1)*4,122,8)
+			print(e,-2+(i/10-1)*4,122,8)
 		end
 	end
 		
