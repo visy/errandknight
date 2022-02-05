@@ -8,7 +8,8 @@ cheat = 0
 player = { x = 8*3, y = -512, walk = 0, dir = -1, attack = 0, atime = 0, 
 weapon = 5, aspeed = 3, acooldown = 24, acooltimer = 0, hb_x = 9, hb_y = 1, hb_s = 11, hp = 100, maxhp = 100, w = 9, h = 17, xv=0,yv=0,jumpheight=2,speed=0.8,friction=0.5,iframes=0,
 moveframes=0,totalsouls = 0,souls=0, level=1,dead = false,deathframes=0,keys=0,
-onladder=false,prevladder=false
+onladder=false,prevladder=false,
+jst = 10, ast = 20, st = 100, maxst = 100,streco=0.5,isjumping=false
 }
 
 enemies = {}
@@ -93,6 +94,7 @@ function drawdoors()
 	end
 end
 
+rndr = {}
 
 function _init()
 	if (cheat == 1) then
@@ -100,6 +102,11 @@ function _init()
 --		player.maxhp = 1
 --		player.hp = 39
 	end
+	
+	for i=1,500 do
+		rndr[i] = rnd()*32
+	end
+
 	initdoors()
 	initenemies()
 	inittab()
@@ -173,13 +180,29 @@ function physics(po,isplayer)
 
  po.xv*=po.friction
 
+	if (isplayer) then
+		if (po.st == 0) then
+			po.xv/=2
+		end
+	end
+
 	if ((btn(0) == true or btn(1) == true) and isplayer and player.y > 0) then
 		if (po.xv>=0) then po.dir = 1
 		else po.dir = -1 end
 	end
 	
 	if (isplayer) then
-		po.isjumping = btn(4)
+		pre = po.isjumping
+		thebtn = btn(4)
+		if (thebtn == true and pre == false) then
+
+			if (po.st > 0) then
+				po.isjumping = true
+				po.jumpframes=16
+			end
+
+		end
+		
 	else
 		if po.jumptrigger == true then
 			po.isjumping = po.jumptrigger
@@ -195,13 +218,16 @@ function physics(po,isplayer)
 
  if onladder == false or isplayer == false	then
 	 if(collidingsolid(po.x,po.y+1))then
-	     if(po.isjumping and not collidingsolid(po.x,po.y-1))then
+	     if(po.jumpframes == 15 and po.isjumping and not collidingsolid(po.x,po.y-1))then
 						 if isplayer then
 	      	sfxi(0)
+								po.st-=po.jst
+
 	      else
 	       sfxi(6)
 	      end
 	      po.yv-=po.jumpheight
+				   po.isjumping =false
 	     end
 	 else
 	  po.yv+=gravity
@@ -324,9 +350,14 @@ end
 gameover = 0
 
 function updateplayer()
+
 	if (player.dead == true) then
 		player.deathframes+=1
 		return
+	end
+
+	if (player.st < player.maxst) then
+		player.st+=player.streco
 	end
 
 	if (player.iframes > 0) then
@@ -335,8 +366,10 @@ function updateplayer()
 
 	physics(player,true)
 
- if (btn(5) and player.attack == 0 and player.acooltimer == 0) then 
+ if (btn(5) and player.attack == 0 and player.acooltimer == 0 and player.st > 2) then 
  	player.attack = 1
+ 	player.st-=player.ast
+
  	if (shopmode == 0) then
  		sfxi(3)
  	else
@@ -498,10 +531,15 @@ end
 attack_hitbox = { }
 
 dmgs = {}
-
+heals = {}
 function damage(t,n)
 	dmg = {x = t.x, y=t.y,n=n,frames=16}
 	add(dmgs,dmg)
+end
+
+function healing(t,n,k)
+	heal = {k=k, x = t.x, y=t.y,n=n,frames=16}
+	add(heals,heal)
 end
 
 function wallerlogic(e)
@@ -562,6 +600,8 @@ function updateenemies()
 			end
 			if ((collide_aabox(enemy,player) or checkweapon) and enemy.iframes == 0 and player.iframes == 0) then
 				player.hp-=enemy.dmg
+				damage(player,enemy.dmg)
+
 				player.iframes = 32
 				sfxi(5)
 				if (player.hp <= 0) then
@@ -743,9 +783,11 @@ function updateitems()
 		deli(items,rmd[i].i)
 		if (tt == item_heart) then
 			player.hp+=5
+			healing(player,5)
 			if (player.hp>player.maxhp) then player.hp = player.maxhp end
 			sfxi(11)
 		elseif (tt == item_key) then
+			healing(player,1,1)
 			player.keys+=1
 			sfxi(9)
 		end
@@ -1181,11 +1223,12 @@ function drawdmg()
 	for i=1,#dmgs do
 		d = dmgs[i]
 		if (d.frames >= 0) then
-		print(flr(d.n),d.x+12,-1+d.y-cos(d.frames*0.04)*4,0)
-		print(flr(d.n),d.x+12,1+d.y-cos(d.frames*0.04)*4,0)
-		print(flr(d.n),d.x+12-1,d.y-cos(d.frames*0.04)*4,0)
-		print(flr(d.n),d.x+12+1,d.y-cos(d.frames*0.04)*4,0)
-		print(flr(d.n),d.x+12,d.y-cos(d.frames*0.04)*4,8+(16-d.frames)*0.2)
+		oy = cos(i*0.1)*4
+		print(flr(d.n),d.x+12,oy+-1+d.y-cos(d.frames*0.04)*4,0)
+		print(flr(d.n),d.x+12,oy+1+d.y-cos(d.frames*0.04)*4,0)
+		print(flr(d.n),d.x+12-1,oy+d.y-cos(d.frames*0.04)*4,0)
+		print(flr(d.n),d.x+12+1,oy+d.y-cos(d.frames*0.04)*4,0)
+		print(flr(d.n),d.x+12,oy+d.y-cos(d.frames*0.04)*4,8+(16-d.frames)*0.2)
 		d.frames-=1
 		if (d.frames == 0) then
 			add(r,i)
@@ -1200,9 +1243,51 @@ function drawdmg()
 
 end
 
+function drawhealing()
+	camera(player.x-64,player.y-64)
+ r = {}
+	for i=1,#heals do
+		d = heals[i]
+		if (d.frames >= 0) then
+		oy = cos(i*0.1)*4
+		co = 8
+		if (d.k == 1) then
+			co = 10
+		end
+		print("+"..flr(d.n),d.x+12,oy+-1+d.y-cos(d.frames*0.04)*4,0)
+		print("+"..flr(d.n),d.x+12,oy+1+d.y-cos(d.frames*0.04)*4,0)
+		print("+"..flr(d.n),d.x+12-1,oy+d.y-cos(d.frames*0.04)*4,0)
+		print("+"..flr(d.n),d.x+12+1,oy+d.y-cos(d.frames*0.04)*4,0)
+		print("+"..flr(d.n),d.x+12,oy+d.y-cos(d.frames*0.04)*4,co)
+		d.frames-=1
+		if (d.frames == 0) then
+			add(r,i)
+		end
+		end
+	end
+	
+	for i=1,#r do
+		deli(heals,r[i])
+	end
+
+
+end
+
 function drawui()
 	camera()
 	rectfill(0,120,128,128,0)
+
+	--stamina
+	for i=1,player.maxst,5 do
+		h = "█"
+		e = "…"
+	
+	 if (i <= player.st) then
+			print(h,0+(i/10-1)*4,3,11)
+		else
+			print(e,0+(i/10-1)*4,5,11)
+		end
+	end
 	
 	--hp
 	for i=1,player.maxhp,5 do
@@ -1210,11 +1295,13 @@ function drawui()
 		e = "…"
 	
 	 if (i <= player.hp) then
-			print(h,-2+(i/10-1)*4,122,8)
+			print(h,0+(i/10-1)*4,-1,8)
 		else
-			print(e,-2+(i/10-1)*4,122,8)
+			print(e,0+(i/10-1)*4,-1,8)
 		end
 	end
+
+
 		
 	print("key:"..pad(""..player.keys,2),45,122,10)
 	print("soul:"..pad(""..player.souls,3),71,122,12)
@@ -1410,6 +1497,17 @@ function _draw()
 		if (ff < 1) ff = 1
 		
 		if (player.y < 0) rectfill(0,0,128,128,fadepal[ff])
+
+		camera(player.x-64,player.y-64)		
+		if (player.y > -256) then
+		pal(7,flr(player.y*0.01))
+		end
+		for i=1,13,1 do
+		spr(105, -time()*10+32+cos((i*32.0)*0.01)*32,-500+i*32+rndr[i],2,1)
+		end
+		pal()
+		
+		camera()		
 	end
 --	clip(player.x,player.y,player.x+32,player.y+32)
 	camera(player.x-64,player.y-64)
@@ -1439,7 +1537,7 @@ function _draw()
 	drawtorch()
 	drawshadow()
 	drawdmg()
-	drawui()
+	drawhealing()
 	end
 	camera()
 
@@ -1479,6 +1577,10 @@ function _draw()
 	if (player.y >= 0 and intro == 2) then intro = 1 end
 	if (player.y > 24 and intro == 1) then intro = 0 end
 	
+	if (intro == 0) then
+		drawui()
+
+	end
 
 end
 __gfx__
@@ -1530,14 +1632,14 @@ aaaaaaa0022222220222222202222222009a99007700000000000000220000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0288288008ee8ee00e22e22000000000900090000900090009000000000900090000000000000000000000000000000000000000000600600006006055555555
-28ee8e288e22e28ee28828e200000000090000090000000900000090090000900000000000000000000000000000000000000000006606600066066011111111
-28eeee288e22228ee28888e200000000000990000009900090099000000990000000000000000000000000000000000000000000006606600066066056100561
-28eeee288e22228ee28888e200000000009aa900909aa900009aa909009aa90000000000000000000000000000000000000000000c66ccc50c66ccc556100561
-28eeee288e22228ee28888e200000000909aa900009aa900009aa900009aa90900000000000000000000000000000000000000000ccccccc0ccccccc56100561
-028ee28008e228e00e288e20000000000009900900099000000990000009900000000000000000000000000000000000000000000ccccccc0ccccccc56666661
-00282800008e8e0000e2e200000000000900000009000090900000909000000000000000000000000000000000000000000000000ccccccc0ccccccc56100561
-000080000000e00000002000000000000000009090009000000900090090009000000000000000000000000000000000000000000cccccccffcccccc56100561
+0288288008ee8ee00e22e22000000000900090000900090009000000000900090000000000007777777000000000000000000000000600600006006055555555
+28ee8e288e22e28ee28828e200000000090000090000000900000090090000900000000000777777777770000000000000000000006606600066066011111111
+28eeee288e22228ee28888e200000000000990000009900090099000000990000000000007777777777777000000000000000000006606600066066056100561
+28eeee288e22228ee28888e200000000009aa900909aa900009aa909009aa90000000000777777777777770000000000000000000c66ccc50c66ccc556100561
+28eeee288e22228ee28888e200000000909aa900009aa900009aa900009aa90900000000777777777777777000000000000000000ccccccc0ccccccc56100561
+028ee28008e228e00e288e20000000000009900900099000000990000009900000000000777777777777770000000000000000000ccccccc0ccccccc56666661
+00282800008e8e0000e2e200000000000900000009000090900000909000000000000000077777777777700000000000000000000ccccccc0ccccccc56100561
+000080000000e00000002000000000000000009090009000000900090090009000000000000777777770000000000000000000000cccccccffcccccc56100561
 1111111111111111101110111011101101110111011101110101010101010101000100010001000100010001000100010000000000cffffcffcffffc56100561
 11111111111111111110111011101110101010101010101010101010101010101010101010101010010001000100010000000000ff5555550055555556666661
 11111111111111111011101110111011110111011101110101010101010101010100010001000100000100010001000100000000ffcccccc00cccccc56100561
