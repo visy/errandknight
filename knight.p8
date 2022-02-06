@@ -261,7 +261,9 @@ function physics(po,isplayer)
 	   po.y+=sgn(po.yv)
 	  end
 	  po.yv=0
+	  if (isplayer) then
 			sfx(27)
+			end
 	 else
 	  po.y+=po.yv
 	 end
