@@ -10,7 +10,7 @@ cheat = 0
 
 player = { x = 8*3, y = -512, walk = 0, dir = -1, attack = 0, atime = 0, 
 weapon = 5, aspeed = 3, acooldown = 24, acooltimer = 0, hb_x = 9, hb_y = 1, hb_s = 11, hp = 100, maxhp = 100, w = 6, h = 17, xv=0,yv=0,jumpheight=2,speed=0.8,friction=0.5,iframes=0,
-moveframes=0,totalsouls = 0,souls=0, level=1,dead = false,deathframes=0,keys=0,
+moveframes=0,totalsouls = 0,souls=0, level=1,dead = false,deathframes=0,keys=10,
 onladder=false,prevladder=false,
 jst = 10, ast = 20, st = 100, maxst = 100,streco=0.25,isjumping=false,
 spelltime = -2,spelldmg=5,spell=false,spellx=0,spelly=0,spellactive=false
@@ -73,7 +73,7 @@ function initdoors()
 		mi = mget(mx,my)
 		if (mi == tile_door) then
 		
-			door = { x=mx*8,y=my*8, mx = mx, my = my, openframes=-2,opened= false }
+			door = { x=mx*8,y=my*8, mx = mx, my = my, openframes=-2,opened= false,opendir=0 }
 			add(doors,door)
 		end
 
@@ -89,11 +89,20 @@ function drawdoors()
 			mx = door.mx
 			my = door.my
 			oo = 0
+			dof = false
 			if (door.openframes > 0) then
 				oo = 32-door.openframes
 			end
+
+			if door.opendir == -1 then
+			 dof = true
+			end
 			if (door.opened == true) return
-			sspr(0,8,8,24,mx*8,my*8,8-oo/4,24)
+			if (dof == false) then
+				sspr(0,8,8,24,mx*8,my*8,8-oo/4,24)
+			else
+				sspr(0,8,8,24,oo/4+mx*8,my*8,8-oo/4,24)
+			end
 		end
 	end
 end
@@ -101,6 +110,9 @@ end
 rndr = {}
 
 function _init()
+-- local clen = px9_comp(0,0,128,60, 0x8000, mget)
+--	cstore(0x2000, 0x8000, clen, "kmap.p8")
+ 
 	if (cheat == 1) then
 --		player.keys = 99
 --		player.maxhp = 1
@@ -580,18 +592,23 @@ opening = {}
 function doorat(x,y)
  for i=1,#doors do
   d = doors[i]
- 	if (d.mx == x) then 
+ 	if (d.mx == x and d.my == y-1) then 
  		d.di = i
 	 	return d 
  	end
  end
+ return -1
 end
 
 function opendoor(tx,ty)
-	dd = doorat(tx)
+	dd = doorat(tx,ty)
+	if (dd == -1) then
+		return
+	end
 	if (dd.openframes == -2 and dd.opened == false and player.keys > 0) then
 		player.keys-=1
 	 dd.openframes=32
+	 dd.opendir = player.dir
 	 add(opening,dd)
  end
 end
@@ -1757,6 +1774,119 @@ function _draw()
 	end
 
 end
+-->8
+
+function
+    px9_decomp(x0,y0,src,vget,vset)
+
+    local function vlist_val(l, val)
+        -- find position and move
+        -- to head of the list
+
+--[ 2-3x faster than block below
+        local v,i=l[1],1
+        while v!=val do
+            i+=1
+            v,l[i]=l[i],v
+        end
+        l[1]=val
+--]]
+
+--[[ 7 tokens smaller than above
+        for i,v in ipairs(l) do
+            if v==val then
+                add(l,deli(l,i),1)
+                return
+            end
+        end
+--]]
+    end
+
+    -- bit cache is between 8 and
+    -- 15 bits long with the next
+    -- bits in these positions:
+    --   0b0000.12345678...
+    -- (1 is the next bit in the
+    --   stream, 2 is the next bit
+    --   after that, etc.
+    --  0 is a literal zero)
+    local cache,cache_bits=0,0
+    function getval(bits)
+        if cache_bits<8 then
+            -- cache next 8 bits
+            cache_bits+=8
+            cache+=@src>>cache_bits
+            src+=1
+        end
+
+        -- shift requested bits up
+        -- into the integer slots
+        cache<<=bits
+        local val=cache&0xffff
+        -- remove the integer bits
+        cache^^=val
+        cache_bits-=bits
+        return val
+    end
+
+    -- get number plus n
+    function gnp(n)
+        local bits=0
+        repeat
+            bits+=1
+            local vv=getval(bits)
+            n+=vv
+        until vv<(1<<bits)-1
+        return n
+    end
+
+    -- header
+
+    local
+        w,h_1,      -- w,h-1
+        eb,el,pr,
+        x,y,
+        splen,
+        predict
+        =
+        gnp"1",gnp"0",
+        gnp"1",{},{},
+        0,0,
+        0
+        --,nil
+
+    for i=1,gnp"1" do
+        add(el,getval(eb))
+    end
+    for y=y0,y0+h_1 do
+        for x=x0,x0+w-1 do
+            splen-=1
+
+            if(splen<1) then
+                splen,predict=gnp"1",not predict
+            end
+
+            local a=y>y0 and vget(x,y-1) or 0
+
+            -- create vlist if needed
+            local l=pr[a] or {unpack(el)}
+            pr[a]=l
+
+            -- grab index from stream
+            -- iff predicted, always 1
+
+            local v=l[predict and 1 or gnp"2"]
+
+            -- update predictions
+            vlist_val(l, v)
+            vlist_val(el, v)
+
+            -- set
+            vset(x,y,v)
+        end
+    end
+end
+
 __gfx__
 00000000000600005555555055555550000600600000000000000000000000000000000000000000000000090000000000000000000000000000000000000000
 00000000006600600500050005000500006606600000000000000000000000000000000000008000000000aa0000000000000003300000000000000000000000
@@ -2022,17 +2152,17 @@ __gff__
 __map__
 f3f3f0fff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f3f3f3f3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
 f3f3f0fff2f2f3f3f3f3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f3f3f3f3f3f3f3f3f3f3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f3f3fffff2f2fff3f3fffff3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f3f3f3f3fffffffffffff3f3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f3f3fffff2f2fff3f3fffff4f4f4f4f4f4f4f4f4f4f4f4f0f0f2f2f2f2f2f2f2f2f2f2f1f1f1f1f3f3f3fffffffffffffffffffff3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f3f36ff3f3f3fffffffffff4f4f4f4f4f4f4f4f4f4f4f4f0f0f2f2f2f2f2f2f2f2f2f2f1f1f1f3f3f3fffffffffffffffffffffffff3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f0f07ff3f0f3fbfffffffff3fffffffffffffffffff4f4f0f0fffffffffffffffff2f2f1f1f3f3f3fffffffffffffcfffffffffffffff3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f0f07ffff0f3fbf3f3f0f0f3fffffffffffffffffff4f4f0f0fffffffffffffffff2f2f1f3f3f3fffffffffffff7f6f7f5fffffffffffff3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f0ff7ffff0f3f1f1f1f0f0f3fffffffffffffffffff4f4f0f0fffffffffffffffff2f2f1f3f3fffffffffffffff6f7f5f7fffffffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f0ff7ffff0f0f1f1f1f0f0f3fffffffffffffffffff4f4f0f0fffffffffffffffff2f2f3f3f3fffffffffffffff6f7f6f5fffffffffffffff3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f0ff7ffff0f0f1fff1f0f0f3fffffffffffffffffff4f4f0f0fffffffffffffffff2f2f3f3fffffffffffffffffffffffffffffffffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f0f07ffff0f0f0f0f0f0f0f3fffffffffffffffffff4f4f0f0fffffffff2f26ffff2f2f3f3fffffffffffffffffffffffffffffffffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f0f07ffff0f0f0f0f0f0f0fffffff6f6f7f6fffffffffff8fffffffffff2f27ffff2f2f3f3fffffffffffffffffffffffcfffffffffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f0ff7ffffffffffffffffffffffff6fffffffffffffffff9fffffff2f2f2f27ffff2f2f3f3fffffffffffff7f5f5f7f6f6f7f5fffffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f3f3fffffff3f3fffffffff3fbfbfbfbf1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f3f3f3f3fffffffffffff3f3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f3f3fffffff3f3fffffff5f6f7fff4f4f4f4f4f4f4f4f4f0f0f2f2f2f2f2f2f2f2f2f2f1f1f1f1f3f3f3fffffffffffffffffffff3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f3f36ff3fff3f3fffffff5f6f7fffff4f4f4f4f4f4f4f4f0f0f2f2f2f2f2f2f2f2f2f2f1f1f1f3f3f3fffffffffffffffffffffffff3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f0f07ff3f0f3fbfffffff5f6f7fffff5f6f7fffffff4f4f0f0fffffffffffffffff2f2f1f1f3f3f3fffffffffffffcfffffffffffffff3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f0f07ffff0f3fbfffff0f5f6f7fffff5f6f7fffffff4f4f0f0fffffffffffffffff2f2f1f3f3f3fffffffffffff7f6f7f5fffffffffffff3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f0ff7ffff0f3fffffffff5f6f7fffff5f6f7fbfffff4f4f0f0fffffffffffffffff2f2f1f3f3fffffffffffffff6f7f5f7fffffffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f0ff7ffff0f0fffffffff5f6f7fbfbfbfbfffffffff4f4f0f0fffffffffffffffff2f2f3f3f3fffffffffffffff6f7f6f5fffffffffffffff3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f0ff7ffff0f0fffffffff5f6f7fffffffffffffffff4f4f0f0fffffffffffffffff2f2f3f3fffffffffffffffffffffffffffffffffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f0f07ffff0f0f0f0f0f0f6f3fffffffffffffffffff4f4f0f0fffffffff2f26ffff2f2f3f3fffffffffffffffffffffffffffffffffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f0f07ffff0f0f0f0f0f0f0fffffff6f3f7f6fffffffffff8fffffffffff2f27ffff2f2f3f3fffffffffffffffffffffffcfffffffffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f0ff7ffffffffffffffffffffffff6f3fffffffffffffff9fffffff2f2f2f27ffff2f2f3f3fffffffffffff7f5f5f7f6f6f7f5fffffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
 f0f0fffffffffffffffffffffff6f6fffffffffffffefff9fffffff2f2f2f27ffff2f2f3f3fffffffffffff5f7f7f6f6f6f6f7fffffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
 f0f0f0f0f02626f0f0f4f4f4f4f4f4f4f4f4f4f4f4f4f4f0f0f2f2f2f2f2f27ffff2f2f3f3f3fffffffffff6f6f6f7f7f6f7f7fffffffffff3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
 f0f0f0f0f0f0f0f0f0f4f4f4f4f4f4f4f4f4f4f4f4f4f4f0f0f2f2f2f2f2f27ffff2f2f1f3f3fffffffffff7f7f7f6f6f7f6f7fffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f1f1f1f1f1f1
