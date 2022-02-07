@@ -13,7 +13,7 @@ weapon = 5, aspeed = 3, acooldown = 24, acooltimer = 0, hb_x = 9, hb_y = 1, hb_s
 moveframes=0,totalsouls = 0,souls=0, level=1,dead = false,deathframes=0,keys=0,
 onladder=false,prevladder=false,
 jst = 10, ast = 20, st = 100, maxst = 100,streco=0.25,isjumping=false,
-spelldmg=5,spell=true,spellx=0,spelly=0,spellactive=false
+spelltime = -2,spelldmg=5,spell=false,spellx=0,spelly=0,spellactive=false
 }
 
 enemies = {}
@@ -120,23 +120,31 @@ function _init()
 	
 end
 
-function collide_aabox(a,b)
-    -- a is left most
-    if(a.x>b.x) a,b=b,a
-    -- screen coords
-    local ax,ay,bx,by=flr(a.x),flr(a.y),flr(b.x),flr(b.y)
-    ax+=1
-    ay+=1
-    bx-=1
-    by-=1
-    local xmax,ymax=bx+b.w,by+b.h
-    if ax<xmax and 
-     ax+a.w>bx and
-     ay<ymax and
-     ay+a.w>by then
-     -- collision coords in a space
-     return true,a,b,bx-ax,max(by-ay),min(by+b.h,ay+a.h)-ay
-    end
+function collide_aabox(
+  a,
+  b)
+  
+  x1 = a.x
+  y1 = a.y
+  w1 = a.w
+  h1 = a.h
+
+  x2 = b.x
+  y2 = b.y
+  w2 = b.w
+  h2 = b.h
+  
+  local hit=false
+  local xd=abs((x1+(w1/2))-(x2+(w2/2)))
+  local xs=w1*0.5+w2*0.5
+  local yd=abs((y1+(h1/2))-(y2+(h2/2)))
+  local ys=h1/2+h2/2
+  if xd<xs and 
+     yd<ys then 
+    hit=true 
+  end
+  
+  return hit
 end
 
 
@@ -323,10 +331,22 @@ function dialog(text,text2,y,c)
 	printc4(text2,y+10,c)
 end
 
+function standin()
+ local x = flr(player.x/8)+0
+ local y = flr(player.y/8)+1
+	local tt = mget(x,y)
+	return tt
+end
+
+function standon()
+ local x = flr(player.x/8)+0
+ local y = flr(player.y/8)+2
+	local tt = mget(x,y)
+	return tt
+end
+
 function shoplogic()
- x = flr(player.x/8)+0
- y = flr(player.y/8)+1
-	tt = mget(x,y)
+ tt = standin()
 	if tt == 250 and shopmode == 0 then
 		shopitempos = {x=x*8-48,y=y*8-20}
 		shopmode = 1
@@ -356,6 +376,20 @@ end
 
 gameover = 0
 
+function spellchangelogic()
+	local tt = standon()
+
+	if (fget(tt,5) == true) then
+		if (player.spell == false) then
+			player.spell = true
+			player.prevweapon = player.weapon
+			attack_hitbox = {}
+		end
+		
+		player.spelltime = 100
+	end
+end
+
 function updateplayer()
 
 	if (player.dead == true) then
@@ -381,7 +415,7 @@ function updateplayer()
  	player.attack = 1
  	player.st-=player.ast
 
-		if (player.spell == true) then
+		if (player.spell == true and player.spellactive == false) then
 			player.spellx = player.x+player.dir*4
 			player.spelly = player.y+8
 			player.spelldir = player.dir
@@ -401,10 +435,24 @@ function updateplayer()
 
 	shoplogic()
 
+	spellchangelogic()
+
+	if (player.spelltime >= 0) then
+		player.spelltime-=1
+	end
+	if (player.spelltime == -1) then
+		player.spell = false
+		player.spelltime = -2
+		player.weapon = player.prevweapon	
+	end
+
 	if (player.spellactive == true) then
 		player.spellx+=player.spelldir*player.spellspeed
 		if (pd(player.x,player.y,player.spellx,player.spelly) > 64) then
 			player.spellactive = false
+			player.spellx = -1000
+			player.spelly = -1000
+			attack_hitbox = {}
 		end
 	end
 
@@ -412,8 +460,9 @@ function updateplayer()
 	-- player's attack
 	attack_hitbox = { x = player.hx1, y = player.hy1, w = player.hb_s, h = player.hb_s }
 	else
-	attack_hitbox = { x = player.spellx, y = player.spelly, w = 16, h = 10 }
-		
+	if (player.spellactive == true) then
+		attack_hitbox = { x = player.spellx, y = player.spelly, w = 16, h = 6 }
+	end		
 	end
 
 	-- game exit
@@ -801,17 +850,17 @@ function updatespawners()
 					maybespawnitem(s.x-8,s.y,item_key)
 				end
 				if (s.enemytype == enemy_slime) then
-					hpval = (player.level/2)*4+flr(rnd(4))
-		 		enemy ={x = s.x - 16, 
+					hpval = (player.level/2)*8+flr(rnd(4))
+		 		enemy ={x = s.x - 14, 
 		 		        y = s.y - 12, 
 					 						animspeed = 4+rnd(12), 
-						 					w = 12, h = 15, 
+						 					w = 12, h = 12, 
 								 			hp = hpval, 
 											 jumpheight=2+rnd(1),
 											 speed=0.1+rnd(0.1),
 											 friction=0.4,
 											 bh=bh_patrol,
-											 souls=flr(hpval*1.25),acooldown=4,
+											 souls=flr(hpval*4),acooldown=4,
 											 dmg = flr(hpval/2),										 }
 										 
 					enemy.type = enemy_slime
@@ -929,7 +978,7 @@ function initenemies()
 												speed=0.8,
 												friction=0.1,
 												bh=bh_wallhug,
-												souls=12,
+												souls=20,
 												dmg = 5
 												}
 
@@ -948,7 +997,7 @@ function initenemies()
 									 speed=0.2,
 									 friction=0.4,
 									 bh=bh_patrol,
-									 souls=20, walk=0,
+									 souls=60, walk=0,
 									 attack = 0,dir=-1,
 									 weapon=37,acooldown=4,
 									 spell = false,
@@ -1173,7 +1222,10 @@ function drawhumanoid(actor,sprindex,ox,oy)
 	-- hitbox
 	if (draw_hitbox == true) then
 		rect(actor.x,actor.y, actor.x+actor.w, actor.y+actor.h,10)
-		rect(actor.hx1,actor.hy1, actor.hx2, actor.hy2,8)
+		a = attack_hitbox
+		if (a.x) then
+		rect(a.x,a.y, a.x+a.w, a.y+a.h,15)
+		end
 	end
 
 --	print(player.hp,player.x,player.y-6,2)
@@ -1259,9 +1311,28 @@ function printc4(s,y,c)
   print(s,x,y,c)
 end
 
+spelltime = 0
+spellframe=0
 function drawspell()
 	if (player.spellactive == true) then
-		spr(103,player.spellx,player.spelly,2,1,player.spelldir == -1)
+		spelltime+=1
+		if (spelltime > 4) then
+			spellframe+=1
+			spelltime = 0
+		end
+		if (spellframe > 1) then spellframe = 0 end
+
+		ofs = 0
+		oo = 0
+		if (player.spelldir == -1) then
+			ofs = 8
+			oo = 8
+		else
+			ofs = -8
+		end
+
+		spr(103,oo+player.spellx,player.spelly,1,1,player.spelldir == -1)
+		spr(104+spellframe,oo+player.spellx-ofs,player.spelly,1,1,player.spelldir == -1)
 	end
 end
 
@@ -1703,14 +1774,14 @@ aaaaaaa0ff44aa44ff44aa44ff44aa44ff44444400000000000000000000000000000000940d9940
 2a999a30ffdd55ddffdd55ddffdd55ddffdd55dd00000000000000000000000000000000900194019401999094901990003bbbbbbbbbb300003bbbbbbbbbb300
 22a9a3300055005500cc0055005500cc0055005500000000000000000000000000000000900d90dd90dd9490909094900003bbbbbbbb30000003bbbbbbbb3000
 222a333000cc00cc000000cc00cc000000cc00cc0000000000000000000000000000000099909011901191909090999000003333333300000000333333330000
-22aaa330000800002020000033300000099009900000000000000000000000000000000000000000555555555555555400005550550000001111101000110011
-2aa9aa300066006020200000300033309aa99aa90000000000000000000000000000000011110000566666666666665400057775775000000111101000110000
-22a9a3300086086020202220333003009aaaaaa900000000000000000000000000000000cccc1110564494949444965400057775775000001100001010000111
-22aaa3300055266522202020003003009aa00aa90000000900000000000000000000a900ccccfff1564964949494965400057775775000000011110111110000
-2aaaaa300522555520202220303003009aa00aa9000000aa000000000000000000aaa000ccccff10564494449494965400057775775000001110010100001111
-29a9a9300555757520202000333003009aaaaaa900000aa000000000000000000aa00000cccc1100566494949494965400005775775000000001110111111110
-2aa9aa3002258585202020000000030009aaaa900000aa00000000000000000aaa00000011110000564494949444965400005777777500000111110111110001
-22aaa330055585850000200000000300009aa900000aa00000000000000000aa0000000000000000566666666666665400005771717500000000101111111011
+22aaa33000080000202000003330000009900990000000000c1c1c10000000000000000000000000555555555555555400005550550000001111101000110011
+2aa9aa300066006020200000300033309aa99aa9000000001aabb99c000000000000000011110000566666666666665400057775775000000111101000110000
+22a9a3300086086020202220333003009aaaaaa900000000caabb99c0000000000000000cccc1110564494949444965400057775775000001100001010000111
+22aaa3300055266522202020003003009aa00aa90000000918844eec000000000000a900ccccfff1564964949494965400057775775000000011110111110000
+2aaaaa300522555520202220303003009aa00aa9000000aac8844eec0000000000aaa000ccccff10564494449494965400057775775000001110010100001111
+29a9a9300555757520202000333003009aaaaaa900000aa01226633c000000000aa00000cccc1100566494949494965400005775775000000001110111111110
+2aa9aa3002258585202020000000030009aaaa900000aa00c226633c0000000aaa00000011110000564494949444965400005777777500000111110111110001
+22aaa330055585850000200000000300009aa900000aa0000cccccc0000000aa0000000000000000566666666666665400005771717500000000101111111011
 222a3330005177710051777100517771009a900000aa000000000000000059a00000000000000000566664449666665400005777777500000000001111110000
 22a9a330005555550055555500555555009a990005900000000000000227500000000000000000005666649496565654000005777e5000000011001111100000
 2a999a30022222220222222202222222009aaa907500000000000000222770000000000000000230566664449666665400000057750000000111101111000110
@@ -1946,7 +2017,7 @@ c100001c01551266215c136631300001111010001100000111101000110000011110100011000001
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 
 __gff__
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000101010100000000000000000000000001010101000000000000000000000000000000000000000000000000000000000000000000000000000000000004040400000000000c00000000000000000000000000000002
+0000000000000000000000000000000000000000000000000000000000000000000000000000210000000101010100000000000000000000000001010101000000000000000000000000000000000000000000000000000000000000000000000000000000000004040400000000000c00000000000000000000000000000002
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001800101010101014040000100008000
 __map__
 f3f3f0fff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f3f3f3f3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
@@ -1962,8 +2033,8 @@ f0ff7ffff0f0f1fff1f0f0f3fffffffffffffffffff4f4f0f0fffffffffffffffff2f2f3f3ffffff
 f0f07ffff0f0f0f0f0f0f0f3fffffffffffffffffff4f4f0f0fffffffff2f26ffff2f2f3f3fffffffffffffffffffffffffffffffffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
 f0f07ffff0f0f0f0f0f0f0fffffff6f6f7f6fffffffffff8fffffffffff2f27ffff2f2f3f3fffffffffffffffffffffffcfffffffffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
 f0ff7ffffffffffffffffffffffff6fffffffffffffffff9fffffff2f2f2f27ffff2f2f3f3fffffffffffff7f5f5f7f6f6f7f5fffffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f0f0fffffffffffffcfffdfffff6f6fffffffffffffefff9fffffff2f2f2f27ffff2f2f3f3fffffffffffff5f7f7f6f6f6f6f7fffffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
-f0f0f0f0f0f0f0f0f0f4f4f4f4f4f4f4f4f4f4f4f4f4f4f0f0f2f2f2f2f2f27ffff2f2f3f3f3fffffffffff6f6f6f7f7f6f7f7fffffffffff3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f0f0fffffffffffffffffffffff6f6fffffffffffffefff9fffffff2f2f2f27ffff2f2f3f3fffffffffffff5f7f7f6f6f6f6f7fffffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+f0f0f0f0f02626f0f0f4f4f4f4f4f4f4f4f4f4f4f4f4f4f0f0f2f2f2f2f2f27ffff2f2f3f3f3fffffffffff6f6f6f7f7f6f7f7fffffffffff3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
 f0f0f0f0f0f0f0f0f0f4f4f4f4f4f4f4f4f4f4f4f4f4f4f0f0f2f2f2f2f2f27ffff2f2f1f3f3fffffffffff7f7f7f6f6f7f6f7fffffffffff3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f1f1f1f1f1f1
 fffffffffffffffffffffffffffffffcfffffff3f3f3f3f3f3ffffffffffff7ffff3f3f1f3f3f3fffffffffffffffffffffffffffffffff3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1fbfbfbfbfbfbfbfbf1f1f1f1f1f1f1f1f1f1f1f1f1f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f1f1f1f1f1f1
 fffffffffffffffffffffffffffffffffffffff3f3f3f3f3f3fffffffffffefffff3f3f1f1f3f3f3fffffffffffffffffffffffffffff3f3f3f1f1f1f1f1f1f1f1f1f1f1f1f1f1fbfbfbfbfbfbfbfbfbfbfbfbfbfbfbf1f1f1f1f1f1f1f1f1f1f4f4fffffffffffffffffffffffffffffffffffffffffffff4f4f1f1f1f1f1f1
