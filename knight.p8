@@ -8,7 +8,7 @@ gravity=0.1
 intro = 2
 cheat = 0
 
-enemylimit = 8
+enemylimit = 16
 
 player = { x = 8*3, y = -512, walk = 0, dir = -1, attack = 0, atime = 0, 
 weapon = 5, aspeed = 3, acooldown = 24, acooltimer = 0, hb_x = 9, hb_y = 1, hb_s = 11, hp = 100, maxhp = 100, w = 6, h = 17, xv=0,yv=0,jumpheight=2,speed=0.8,friction=0.5,iframes=0,
@@ -419,7 +419,7 @@ end
 function shoplogic()
  tt = standin()
 	if tt == 250 and shopmode == 0 then
-		shopitempos = {x=48,y=20}
+		shopitempos = {x=player.x-64,y=player.y-24}
 		shopmode = 1
 		sfxi(10)
 	end
@@ -1565,6 +1565,10 @@ function drawhealing()
 
 end
 
+		names = { "red snapper", "brass cleaver", "golden long" }
+		prices = { 100, 150, 500 }
+		armor = {4,13,12,9,11,10,8,2,3,5,6,7,14,15,0}
+
 function drawui()
 	camera()
 	rectfill(0,120,128,128,0)
@@ -1636,14 +1640,11 @@ function drawui()
 		dialog("[bunbun exports employee]","welcome to my shop",0,7)
 
 		--item
-		names = { "red snapper", "brass cleaver", "golden long" }
-		prices = { 100, 150, 500 }
 		itemname = names[shopitem+1]
 		price = prices[shopitem+1]		
 		dialog(itemname,"only " .. price .. " souls for you my friend",20,8)
 		camera(player.x-64,player.y-64)
 
-		armor = {4,13,12,9,11,10,8,2,3,5,6,7,14,15,0}
 		
 		rectfill(shopitempos.x,shopitempos.y,shopitempos.x+16,shopitempos.y+64,0)
 		
