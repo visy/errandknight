@@ -8,6 +8,8 @@ gravity=0.1
 intro = 2
 cheat = 0
 
+enemylimit = 8
+
 player = { x = 8*3, y = -512, walk = 0, dir = -1, attack = 0, atime = 0, 
 weapon = 5, aspeed = 3, acooldown = 24, acooltimer = 0, hb_x = 9, hb_y = 1, hb_s = 11, hp = 100, maxhp = 100, w = 6, h = 17, xv=0,yv=0,jumpheight=2,speed=0.8,friction=0.5,iframes=0,
 moveframes=0,totalsouls = 0,souls=0, level=1,dead = false,deathframes=0,keys=0,
@@ -17,7 +19,6 @@ spelldur=100,spelltick=0,spelltime = -2,spelldmg=5,spell=false,spellx=0,spelly=0
 }
 
 enemies = {}
-enemycount = 0
 
 item_heart = 1
 item_key = 2
@@ -122,8 +123,8 @@ tilesets = { 0,1,2,3,0,0,0,0,
 }
 
 function initmap()
-	-- copy map to 0x9000
-	memcpy(0x9000,0x2000,8192)
+	-- copy map to 0x8000
+	memcpy(0x8000,0x2000,8192)
 	
 	offs = 0
 	xo=0
@@ -144,7 +145,7 @@ function initmap()
 				for xx=0,16 do
 					xt = xx+((tile%8)*16)
 					yt = yy+(flr(tile/8)*16)
-				 t = peek(0x9000+(yt*128+xt))
+				 t = peek(0x8000+(yt*128+xt))
 				 if (t >= 240 and t <= 247) then
 						if (tileset > 0) then
 							t = t - 240
@@ -519,6 +520,7 @@ function updateplayer()
 			player.spelldir = player.dir
 			player.spellspeed = 1
 			player.spellactive=true
+			sfxi(20)
 
 			player.spelltick = 0
 			
@@ -763,21 +765,29 @@ function getattackpower()
 		return dmg
 end
 
-function wallerlogic(e)
-end
-
 
 function updateenemies() 
 	-- enemies
 	hit = { }
 	hitcount = 0
 	
-	if (enemycount <= 0) then
-		return
+	dead = {}
+	for i = 1,#enemies do
+		enemy = enemies[i]
+		if (enemy.dead == true) then
+		 if (enemy.deathframes) then
+			 if (enemy.deathframes <= 0) then
+					add(dead,i)
+				end
+			end
+		end
+	end
+	
+	for i = 1,#dead do
+		deli(enemies,dead[i])
 	end
 
-
-	for i = 1,enemycount do
+	for i = 1,#enemies do
 		enemy = enemies[i]
 
 		dd = abs(pd(enemy.x,enemy.y,player.x,player.y))
@@ -791,8 +801,6 @@ function updateenemies()
 			if (enemy.type != enemy_waller) then
 				physics(enemy,false)
 				humanlogic(enemy)
-			else
-				wallerlogic(enemy)
 			end
 
 			if (enemy.iframes > 0) then
@@ -938,6 +946,18 @@ function drawspawners()
 end
 
 function updatespawners()
+	a = {}
+	for i=1,#spawners do
+		s = spawners[i]
+		if (s.active == false) then
+		add(a,i)
+		end
+	end
+
+	for i=1,#a do
+	 deli(spawners,a[i])
+	end
+	
 	for i=1,#spawners do
 		s = spawners[i]
 		s.acount+=1
@@ -964,10 +984,14 @@ function updatespawners()
 			s.spawnframes-=1
 			if (s.spawncount < s.spawnlimit and s.spawnframes == 0) then
 				s.spawnframes = s.spawntime
+				if (#enemies >= enemylimit) then
+					return
+				end
 				s.spawncount += 1
 				sfxi(17)
 				if (s.spawncount == s.spawnlimit) then
 					maybespawnitem(s.x-8,s.y,item_key)
+					s.active = false
 				end
 				if (s.enemytype == enemy_slime) then
 					hpval = (player.level/2)*8+flr(rnd(4))
@@ -988,7 +1012,6 @@ function updatespawners()
 					addenemycommon(enemy)
 			
 					add(enemies,enemy)
-					enemycount+=1
 			end	
 		end
 	 end
@@ -1072,6 +1095,7 @@ function initspawner(mi,x,y)
 	o.spawncount = 0
 	o.enemytype = mi
 	o.spawner = spawnerid
+	o.active = true
 	return o
 end
 
@@ -1140,7 +1164,6 @@ function initenemies()
 			addenemycommon(enemy)
 	
 			add(enemies,enemy)
-			enemycount+=1
 		end
 
 		end
@@ -1149,7 +1172,7 @@ function initenemies()
 end
 
 function drawenemies()
-	for i = 1,enemycount do
+	for i = 1,#enemies do
 		enemy = enemies[i]
 		if ((enemy.dead == false or enemy.deathframes > 0) and enemy.far == false) then
 
@@ -1210,7 +1233,7 @@ function drawenemies()
 					sfxi(8)
 					player.souls+=enemy.souls
 					player.totalsouls+=enemy.souls
-					if (player.totalsouls >= (player.level*1.25)*50) player.level+=1
+					if (player.totalsouls >= (player.level*1.3)*100) player.level+=1
 				end
 			end
 
@@ -1457,9 +1480,10 @@ function drawspell()
 	end
 end
 
+grad = { 10, 6, 9, 8, 4, 2,1,1,1,1,1,1,1,1,1,1,1,1,1} 
+
 function drawtorch()
  if (player.dead == true) return
-	grad = { 10, 6, 9, 8, 4, 2,1,1,1,1,1,1,1,1,1,1,1,1,1} 
 
 	for y=player.y-4*2,player.y+20*2,2 do
 	for x=player.x-8*2,player.x+16*2,2 do
@@ -1484,6 +1508,15 @@ function pad(string,length)
   return "0"..pad(string, length-1)
 end
 
+function print_o(text,x,y,c)
+		print(text,x,y-1,0)
+		print(text,x,y+1,0)
+		print(text,x-1,y,0)
+		print(text,x+1,y,0)
+		print(text,x,y,c)
+
+end
+
 function drawdmg()
 	camera(player.x-64,player.y-64)
  r = {}
@@ -1491,11 +1524,7 @@ function drawdmg()
 		d = dmgs[i]
 		if (d.frames >= 0) then
 		oy = cos(i*0.1)*4
-		print(flr(d.n),d.x+12,oy+-1+d.y-cos(d.frames*0.04)*4,0)
-		print(flr(d.n),d.x+12,oy+1+d.y-cos(d.frames*0.04)*4,0)
-		print(flr(d.n),d.x+12-1,oy+d.y-cos(d.frames*0.04)*4,0)
-		print(flr(d.n),d.x+12+1,oy+d.y-cos(d.frames*0.04)*4,0)
-		print(flr(d.n),d.x+12,oy+d.y-cos(d.frames*0.04)*4,8+(16-d.frames)*0.2)
+		print_o(flr(d.n),d.x+12,oy+-1+d.y-cos(d.frames*0.04)*4,8+(16-d.frames)*0.2)
 		d.frames-=1
 		if (d.frames == 0) then
 			add(r,i)
@@ -1521,11 +1550,7 @@ function drawhealing()
 		if (d.k == 1) then
 			co = 10
 		end
-		print("+"..flr(d.n),d.x+12,oy+-1+d.y-cos(d.frames*0.04)*4,0)
-		print("+"..flr(d.n),d.x+12,oy+1+d.y-cos(d.frames*0.04)*4,0)
-		print("+"..flr(d.n),d.x+12-1,oy+d.y-cos(d.frames*0.04)*4,0)
-		print("+"..flr(d.n),d.x+12+1,oy+d.y-cos(d.frames*0.04)*4,0)
-		print("+"..flr(d.n),d.x+12,oy+d.y-cos(d.frames*0.04)*4,co)
+		print_o("+"..flr(d.n),d.x+12,oy+-1+d.y-cos(d.frames*0.04)*4,co)
 		d.frames-=1
 		if (d.frames == 0) then
 			add(r,i)
@@ -1618,7 +1643,7 @@ function drawui()
 		dialog(itemname,"only " .. price .. " souls for you my friend",20,8)
 		camera(player.x-64,player.y-64)
 
-		armor = {4,13,12,9,11,10,8}
+		armor = {4,13,12,9,11,10,8,2,3,5,6,7,14,15,0}
 		
 		rectfill(shopitempos.x,shopitempos.y,shopitempos.x+16,shopitempos.y+64,0)
 		
@@ -1644,15 +1669,6 @@ function drawui()
 
 end
 
-function enemycounter()
- c = 0
-	for i=1,enemycount do
-		e = enemies[i]
-		if (e.dead == false) then c+=1 end
-	end
-	
-	return c
-end
 
 itt = 0
 ifr = 0
@@ -1712,7 +1728,7 @@ function updateshadow()
 	pchangey = py
 
 	ray_step=1
-	memset(0x9000,112,512)
+	memset(0x8000,112,512)
 
 	for a=0,360,6 do
 	
@@ -1757,10 +1773,10 @@ function updateshadow()
 			 ray.x+=step_x
 			 ray.y+=step_y
 
-				dv = peek(0x9000+(yi*16)+xi)
+				dv = peek(0x8000+(yi*16)+xi)
 				dv+=2
 				if (dv > 124) then dv = 124 end
-				poke(0x9000+(yi*16)+xi,dv)
+				poke(0x8000+(yi*16)+xi,dv)
 
 			end
 		end
@@ -1782,7 +1798,7 @@ function drawshadow()
 	yo = player.y%8
 
  -- map to 0x80
-	poke(0x5f56, 0x90)
+	poke(0x5f56, 0x80)
 	--alt map width
 	poke(0x5f57, 16)
 
@@ -1834,7 +1850,8 @@ function _draw()
 	drawhumanoid(player,1,1,-1)
 	drawhumanoid(player,1,0,1)
 	
---	print(stat(1),player.x,player.y-8)
+--	print(stat(0),player.x-32,player.y-8,0)
+--	print(stat(0),player.x+1-32,player.y-7,7)
 	pal()
 	-- actual
 	-- level armor colors
@@ -1861,10 +1878,10 @@ function _draw()
 	end
 
 	if (gameover == 2) then
-		rectfill(0,120,128,128,0)
-		printc("success! found the exit!",122,5)
-		printc("success! found the exit!",123,10)
-		stop()
+--		rectfill(0,120,128,128,0)
+--		printc("success! found the exit!",122,5)
+--		printc("success! found the exit!",123,10)
+--		stop()
 	end
 
 		rectfill(0,0,128,8,0)
@@ -2183,13 +2200,13 @@ f5f6f7f2f2f7f5f6f7f5f6f7fffff7f5fffffffffffff4f3f4ffffffff7ff4f3f4ffffffffffffff
 f5f6f7f2f2f7f5f6f7f5f6f7fffff7f5f4f4f4f4f46ff4f3f4ffffffff7ff4f3f4fffffffffffffffffffffffffffff4fbfffffffffffffffffffffffffffffbf0fffffffff2f2fffffffffffffffff0f5fffffffffffffffffffffffffffff5f6fffffffffffffffffffffffffffff6f7fffffffffffffffffffffffffffff7
 f5f6f7f2f2f7f5f6f7f5f6f7fffff7f5f3f3f3f3f37ff3f3f4ffffffff7ff4f3f4fffffffffffffffffffffffffffff4fbfffffffffffffffffffffffffffff8fffffffff2f2f2f2fffffffffffffff0f5fffffffffffffffffffffffffffff5f6fffffffffffffffffffffffffffff6f7fffffffffffffffffffffffffffff7
 f5f6f7f2f2f7f5f6f7f5f6f7fffff7f5f3f3f3f3f37ff3f3f4ffffffff7ff4f3f4fffffffffffffffffffffffffffff4fbfffffffffffffffffffffffffffff9fffffff2f2f2f2f2f2fffffffffffff0f5fffffffffffffffffffffffffffff5f6fffffffffffffffffffffffffffff6f7fffffffffffffffffffffffffffff7
-f5f6f7f2f2f7f5f6fffffffffffff7f5f3f3f3f4f47fffffffffffffff7ff4f3f8fffffffffffffffffffffffffffff4fbfffffffffffffffffffffffffffdf9fffff2f2f2fffff2f2f2fffffffffff0f5fffffffffffffffffffffffffffff5f6fffffffffffffffffffffffffffff6f7fffffffffffffffffffffffffffff7
-f5f6f7f2f2f7f5f6fffffffdfffff7f5f3f3f3f4fffffefffffffffffffffffff9fffffffffffffffffffffffffffff4fbfffffffffffffffffffff6f7f6f7fbf0f2f2f2f2fffff2f2f2f26ffffffff0f5fffffffffffffffffffffffffffff5f6fffffffffffffffffffffffffffff6f7fffffffffffffffffffffffffffff7
-f5f6f7f2f2f7f5f6fffff6f7f5f6f7f5f3f3f3f4f4f4f4f3f4fffffff7fffffff9fffffffffffffffffffffffffffff4fbfffffffffffffffffff6f7f6f7f6fbf0f2f2f2f2f2f2f2f2f2f27ffffffff0f5fffffffffffffffffffffffffffff5f6fffffffffffffffffffffffffffff6f7fffffffffffffffffffffffffffff7
-f5f6f7f2f2f7f5f6fffff6f7f5f6f7f5f3f3f3f3fffffffff4f4f46ff4f4f4f3f46ffffffffffffffffffffffffffff8f8fffffffffffffffff6f6f7f6f7f6fbf0fb2c2dfffffffffff2f27ffffffff0f5fffffffffffffffffffffffffffff5f6fffffffffffffffffffffffffffff6f7fffffffffffffffffffffffffffff7
-f5f6f7f2f2f7f5f6fffffffffff6f7f5f3f4f4f4f4f4f4f4f4f4f47ff4f3f3f3f47ffffffffffffffffffffffffffff9f9fffffffffffffff6f7f6f7f6f7f6fbf0fb3c3dfffffffffff2f27ffffffff0f5fffffffffffffffffffffffffffff5f6fffffffffffffffffffffffffffff6f7fffffffffffffffffffffffffffff7
-f5f6f7f2f2f7f5f6f0f0f6f7fff6f7f5f3f4fffffffffffffffffffff4f3f3f3f4fffffffffffffffffefefefefefff9f9fffffffffffff6f7f6f6f7f6f7f6fbf0fb2a2bffffffffffffff7ffffffffffffffffffffffffffffffffffffffff5f6fffffffffffffffffffffffffffff6f7fffffffffffffffffffffffffffff7
-f5f6f7f2f2f7f5f6f0f0f6f7fffff7f5f3f4fffff4f4f4f4f4f4f4f4f4f3f3f3f42626f2f3f4f2f3f4f2f3f4f2f3f4f4fbf6f7f6f7f6f7f6f7f6f7f6f7f6f7fbf0fb3a3bfafffffffffffffffffffffffffffffffffffffffffffffffffffff5f6fffffffffffffffffffffffffffff6f7fffffffffffffffffffffffffffff7
+f5f6f7f2f2f7f5f6fffffffffffff7f5f3f3f3f4f47fffffffffffffff7ff4f3f8fffffffffffffffffffffffffffff4fbfffffffffffffffffffffffffffdf9fffff2f2191a1bf2f2f2fffffffffff0f5fffffffffffffffffffffffffffff5f6fffffffffffffffffffffffffffff6f7fffffffffffffffffffffffffffff7
+f5f6f7f2f2f7f5f6fffffffdfffff7f5f3f3f3f4fffffefffffffffffffffffff9fffffffffffffffffffffffffffff4fbfffffffffffffffffffff6f7f6f7fbf0f2f2f2f2f2f2f2f2f2f26ffffffff0f5fffffffffffffffffffffffffffff5f6fffffffffffffffffffffffffffff6f7fffffffffffffffffffffffffffff7
+f5f6f7f2f2f7f5f6fffff6f7f5f6f7f5f3f3f3f4f4f4f4f3f4fffffff7fffffff9fffffffffffffffffffffffffffff4fbfffffffffffffffffff6f7f6f7f6fbf0f22c2dfffffffffff2f27ffffffff0f5fffffffffffffffffffffffffffff5f6fffffffffffffffffffffffffffff6f7fffffffffffffffffffffffffffff7
+f5f6f7f2f2f7f5f6fffff6f7f5f6f7f5f3f3f3f3fffffffff426266ff4f4f4f3f46ffffffffffffffffffffffffffff8f8fffffffffffffffff6f6f7f6f7f6fbf0fb3c3dfffffffffff2f27ffffffff0f5fffffffffffffffffffffffffffff5f6fffffffffffffffffffffffffffff6f7fffffffffffffffffffffffffffff7
+f5f6f7f2f2f7f5f6fffffffffff6f7f5f3f4f4f4f4f4f4f4f4f4f47ff4f3f3f3f47ffffffffffffffffffffffffffff9f9fffffffffffffff6f7f6f7f6f7f6fbf0fb2a2bfffffffffff2f27ffffffffffffffffffffffffffffffffffffffff5f6fffffffffffffffffffffffffffff6f7fffffffffffffffffffffffffffff7
+f5f6f7f2f2f7f5f6f0f0f6f7fff6f7f5f3f4fffffffffffffffffffff4f3f3f3f4fffffffffffffffffefefefefefff9f9fffffffffffff6f7f6f6f7f6f7f6fbf0fb3a3bfaffffffffffff7ffffffffffffffffffffffffffffffffffffffff5f6fffffffffffffffffffffffffffff6f7fffffffffffffffffffffffffffff7
+f5f6f7f2f2f7f5f6f0f0f6f7fffff7f5f3f4fffff4f4f4f4f4f4f4f4f4f3f3f3f42626f2f3f4f2f3f4f2f3f4f2f3f4f4fbf6f7f6f7f6f7f6f7f6f7f6f7f6f7fbf0fbf5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f6fffffffffffffffffffffffffffff6f7fffffffffffffffffffffffffffff7
 __sfx__
 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -2219,7 +2236,7 @@ __sfx__
 00010000277002371024720287202a7302a73000730007000070000700197201472017730197301a7301d7101e750007000070000700007000070000700007000070000700007000070000700007000070000700
 000200002e1502e1102b1402a130131702417024170261700b1600b1502e1500e1500010000100001000010000100001000010000100001000010000100001000010000100001000010000100001000010000100
 010200002a61403c5300c4300c0000c0000c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00030000241101c120111400d1400d6200a6100b6100c6200c62010610146101a61021610246100c6100b6000a600086000560004600056000260002600000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 011000201cf141cf101cf101cf101cf241cf201cf201cf201cf341cf301cf301cf301cf441cf401cf401cf401cf541cf501cf501cf501cf441cf401cf401cf401cf341cf301cf301cf301cf241cf201cf201cf20
 0110002023f1423f1023f1023f1023f2423f2023f2023f2023f3423f3023f3023f3023f4423f4023f4023f4023f5423f5023f5023f5023f4423f4023f4023f4023f3423f3023f3023f3023f2423f2023f2023f20
