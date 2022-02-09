@@ -112,41 +112,56 @@ end
 
 rndr = {}
 
-mapp = {1,1,2,3,4,5,6,7,
-								1,2,3,2,1,2,3,2,
+mapp = {0,1,2,3,0,1,2,3,
+								17,2,3,2,1,2,3,2,
 								1,2,3,2,1,2,3,4,
 								1,2,3,2,1,2,3,2
 }
 
-tileset=0
+tilesets = { 0,0,0,0,0,0,0,0, 
+														0,0,0,0,0,0,0,0,
+														0,0,0,0,0,0,0,0,
+														0,0,0,0,0,0,0,0
+}
 
 function initmap()
+	-- copy map to 0x9000
 	memcpy(0x9000,0x2000,8192)
 	
 	offs = 0
 	xo=0
 	yo=0
-	
-	tilesets = { 0,1,0,0,0,0,0,0,0}
-	
-	for x=1,7,1 do
-		tile = mapp[x]
-		offs+=1
-		tileset = tilesets[offs]
-		for yy=0,15 do
-			for xx=0,15 do
-			 t = peek(0x9000+(yy*128+xx+(tile*16)))
-			 if (t >= 240 and t <= 247) then
-					if (tileset > 0) then
-						t = t - 240
-						t+=72+(tileset-1)*8
-					end
-			 end
-			 
-				mset(xx+xo*16,yy+yo*16,t)
-			end
+
+	for y=1,48 do
+		for x=1,128 do
+			mset(x,y,255)
 		end
-		xo+=1
+	end
+	
+	for y=1,3,1 do
+		for x=1,8,1 do
+			tile = mapp[offs+1]
+			tileset = tilesets[offs+1]
+			offs+=1
+			for yy=0,16 do
+				for xx=0,16 do
+					xt = xx+((tile%8)*16)
+					yt = yy+(flr(tile/16)*16)
+				 t = peek(0x9000+(yt*128+xt))
+				 if (t >= 240 and t <= 247) then
+						if (tileset > 0) then
+							t = t - 240
+							t+=72+(tileset-1)*8
+						end
+				 end
+				 
+					mset(xx+xo*16,yy+yo*16,t)
+				end
+			end
+			xo+=1
+		end
+		xo=0
+		yo+=1
 	end
 
 
@@ -1932,7 +1947,7 @@ aaaaaaa0022222220222222202222222009a99007700000009822289220000000000000000002823
 11111111111111111110111011101110101010111010101110101010101010101010101010101010010001000100010000000000000000cc00cc000056100561
 2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4fbfbfbfbfbfbfbfbfbfbfbfbfbfbfbfbf
 0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
-2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f3f3f3f3f3fffff3f3f3f3f3f3f3f3f3f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4fbfbfbfbfbfbfbfbfbfbfbfbfbfbfbfbf
+2f2f2f2f2f2f2f0f0f2f2f2f2f2f2f2f3f3f3f3f3fffff3f3f3f3f3f3f3f3f3f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4fbfbfbfbfbfbfbfbfbfbfbfbfbfbfbfbf
 0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
 2f2f2f2f2f2f2f2f2fff2f2f2f2f2f2f3f3f3f3fffffffff3f3f3f3f3f3f3f3f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4fbfbfbfbfbfbfbfbfbfbfbfbfbfbfbfbf
 0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f7f7f7f7f7f7f7f7fffff7f7f7f7f7f7f
@@ -2130,7 +2145,7 @@ __gff__
 __map__
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-fffff2f2f2f2f2f2f2fff2f2f2f2f2f2f3f3f3f3fffffffff3f3f3f3f3f3f3f3f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4fbfbfbfbfbfbfbfbfbfbfbfbfbfbfbfbf0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f7f7f7f7f7f7f7f7fffff7f7f7f7f7f7
+fffff2f2f2f2f2f2f2fff2f2f2f2f2f2f3f4f3f3fffffffff3f3f3f3f3f3f3f3f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4fbfbfbfbfbfbfbfbfbfbfbfbfbfbfbfbf0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f7f7f7f7f7f7f7f7fffff7f7f7f7f7f7
 fffff2f2f2f2fffffffff2f2f2f2f2f2f3f3f3f3fff3f3fffff3f3f3f3f3f3f3f4f4f4f4f4f4fffffffff4f4f4f4f4f4fbfbfbfbfbfbfbfbfbfffbfbfbfbfbfbf0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f5f5f5f5f5f5f5fffffff5f5f5f5f5f5f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f7f7f7f7f7f7f7f7fffff7f7f7f7f7f7
 f2f2f2f2fffffff2f2fff2f2f2f2f2f2f3f3f3f3fff3f3f3fff3f3f3f3f3f3f3f4f4f4f4fffffff4f4f4fff4f4f4f4f4fbfbfbfbfbfffbfbfbfffbfbfbfbfbfbf0f0f0f0f0fffffffffff0f0f0f0f0f0f5f5f5f5f5fffffff5f5f5f5f5f5f5f5f6f6f6f6fffffffffffff6f6f6f6f6f6f7f7f7f7f7fffffffffffff7f7f7f7f7
 f2f2f2f2f2f2f2f2f2fff2f2f2f2f2f2f3f3f3f3f3f3f3f3f3fff3f3f3f3f3f3f4f4f4f4f4f4f4f4f4fffff4f4f4f4f4fbfbfbfbfbfffbfbfbfffbfbfbfbfbfbf0f0f0f0f0fff0f0f0f0f0f0f0f0f0f0f5f5f5f5f5fff5f5f5f5f5f5f5f5f5f5f6f6f6f6f6f6f6f6f6fff6f6f6f6f6f6f7f7f7f7f7fff7f7f7f7fff7f7f7f7f7
@@ -2144,8 +2159,8 @@ f2f2f2f2f2f2f2f2fff2f2f2f2f2f2f2f3f3f3f3fffffffffffffff3f3f3f3f3f4f4f4f4f4f4f4f4
 f2f2f2f2f2f2f2f2fff2f2f2f2f2f2f2f3f3f3f3f3f3f3f3f3f3fff3f3f3f3f3f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4fbfbfbfbfbfbfbfbfbfbfbfbfbfbfbfbf0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7
 f2f2f2f2f2f2f2f2fff2f2f2f2f2f2f2f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4fbfbfbfbfbfbfbfbfbfbfbfbfbfbfbfbf0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7
 f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4fbfbfbfbfbfbfbfbfbfbfbfbfbfbfbfbf0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7
-f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4fbfbfbfbfbfbfbfbfbfbfbfbfbfbfbfbf0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7
-f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f3f3f3f3f3fffff3f3f3f3f3f3f3f3f3f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4fbfbfbfbfbfbfbfbfbfbfbfbfbfbfbfbf0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7
+f4f4f4f4f4f4f3f3f4f4f4f4f4f4f4f4f3f3f3f3f6f6f3f3f3f3f3f3f3f3f3f3f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4fbfbfbfbfbfbfbfbfbfbfbfbfbfbfbfbf0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f7f7f4f4fbf4f7f7f4fbf4f7f7f7f7f7
+f2f2f2f2f2f2fbfbfbf2f2f2f2f2f2f2f3f3f3f3f6f6fff3f3f3f3f3f3f3f3f3f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4fbfbfbfbfbfbfbfbfbfbfbfbfbfbfbfbf0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7
 f2f2f2f2f2f2f2f2f2fff2f2f2f2f2f2f3f3f3f3fffffffff3f3f3f3f3f3f3f3f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4fbfbfbfbfbfbfbfbfbfbfbfbfbfbfbfbf0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f7f7f7f7f7f7f7f7fffff7f7f7f7f7f7
 f2f2f2f2f2f2fffffffff2f2fff2f2f2f3f3f3f3fff3f3fffff3f3fff3f3f3f3f4f4f4f4f4f4fffffffff4f4f4f4f4f4fbfbfbfbfbfbfbfbfbfffbfbfbfbfbfbf0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f5f5f5f5f5f5f5fffffff5f5f5f5f5f5f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f7f7f7f7f7f7f7f7fffff7f7f7f7f7f7
 f2f2f2f2fffffff2f2fff2f2fff2f2f2f3f3f3f3fff3f3f3fff3f3fff3f3f3f3f4f4f4f4fffffff4f4f4fff4f4fff4f4fbfbfbfbfbfffbfbfbfffbfbfbfffbfbf0f0f0f0f0fffffffffff0f0fff0f0f0f5f5f5f5f5fffffff5f5f5f5fff5f5f5f6f6f6f6fffffffffffff6f6f6fff6f6f7f7f7f7f7fffffffffffff7f7fff7f7
