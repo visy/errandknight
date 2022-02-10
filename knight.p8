@@ -220,6 +220,8 @@ end
 
 
 function physics(po,isplayer)
+	po.px = po.x
+	po.py = po.y
 
 	onladder = false
 
@@ -348,6 +350,11 @@ function physics(po,isplayer)
 	 end
  end
 
+
+	if (solid(po.x,po.y+1)) then
+	po.x = po.px
+	po.y = po.py
+	end
 
 
 end
@@ -1847,10 +1854,7 @@ function _draw()
 		end
 		pal()
 		
-		camera()		
 	end
---	clip(player.x,player.y,player.x+32,player.y+32)
-	camera(player.x-64,player.y-64)
 	drawlevel()	
 	drawdoors()
 
