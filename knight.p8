@@ -84,8 +84,7 @@ end
 
 
 function drawdoors()
-	for i=1, #doors do
-		door = doors[i]	
+	for door in all(doors) do
 		if (door.far == false) then
 			mx = door.mx
 			my = door.my
@@ -702,8 +701,7 @@ end
 opening = {}
 
 function doorat(x,y)
- for i=1,#doors do
-  d = doors[i]
+ for d in all(doors) do
  	if (d.mx == x and d.my == y-1) then 
  		d.di = i
 	 	return d 
@@ -776,27 +774,23 @@ end
 function updateenemies() 
 	-- enemies
 	hit = { }
-	hitcount = 0
-	
-	dead = {}
-	for i = 1,#enemies do
-		enemy = enemies[i]
-		if (enemy.dead == true) then
-		 if (enemy.deathframes) then
-			 if (enemy.deathframes <= 0) then
+	dead = { }
+
+	for i,e in ipairs(enemies) do
+		if (e.dead == true) then
+		 if (e.deathframes) then
+			 if (e.deathframes <= 0) then
 					add(dead,i)
 				end
 			end
 		end
 	end
 	
-	for i = 1,#dead do
-		deli(enemies,dead[i])
+	for d in all(dead) do
+		deli(enemies,d)
 	end
 
-	for i = 1,#enemies do
-		enemy = enemies[i]
-
+	for i,enemy in ipairs(enemies) do
 		dd = abs(pd(enemy.x,enemy.y,player.x,player.y))
 		dv = 90
 		if dd >= dv then enemy.far = true
@@ -836,7 +830,6 @@ function updateenemies()
 
 			if (cond and collide_aabox(enemy,attack_hitbox) and enemy.iframes == 0) then
 				add(hit,i)
-				hitcount+=1
 		 	sfxi(2)
 
 	 	end
@@ -864,8 +857,8 @@ function updateenemies()
   end
 	end  
 
-	for i=1,hitcount do
-		enemy = enemies[hit[i]]
+	for i,h in all(hit) do
+		enemy = enemies[i]
 		if (player.xv > 0) then
 		enemy.x+=player.xv*3
 		else
@@ -891,8 +884,7 @@ function updateenemies()
 end
 
 function updatedoors()
-	for i=1,#doors do
-	 s = doors[i]
+	for s in all(doors) do
 		dx = abs(s.x-player.x)
 		dy = abs(s.y-player.y)
 		dv = 60
@@ -906,9 +898,7 @@ function updatedoors()
 	done = {}
 	doneo = {}
 
-	for i=1,#opening do 
-		d = opening[i]
-		
+	for i,d in ipairs(opening) do
 		if (d.openframes) then 
 			if (d.openframes >= 0) then
 				d.openframes-=1
@@ -934,8 +924,7 @@ function updatedoors()
 end
 
 function drawspawners()
-	for i=1,#spawners do
-		s = spawners[i]
+	for i,s in ipairs(spawners) do
 		if (s.far == false) then
 			oo = cos(time()*0.2+i*0.3)*2
 			oo2 = sin(time()*0.3+i*0.2)*2
@@ -946,27 +935,23 @@ function drawspawners()
 				ss = (s.spawncount-(s.spawnlimit-s.spawncount))*2
 				sspr(sx,sy,32,8,ss+s.x-24+oo,s.y+4-oo2,32-oo-ss,8+oo2)
 			end
-			
-			
 		end
 	end
 end
 
 function updatespawners()
 	a = {}
-	for i=1,#spawners do
-		s = spawners[i]
+	for i,s in ipairs(spawners) do
 		if (s.active == false) then
 		add(a,i)
 		end
 	end
 
-	for i=1,#a do
-	 deli(spawners,a[i])
+	for aa in all(a) do
+	 deli(spawners,aa)
 	end
-	
-	for i=1,#spawners do
-		s = spawners[i]
+
+	for s in all(spawners) do	
 		s.acount+=1
 		if (s.acount > s.aspeed) then
 		 s.aframe +=1
@@ -1028,8 +1013,7 @@ end
 
 function updateitems()
 	rmd = {}
-	for i = 1, #items do
-		it = items[i]
+	for i,it in ipairs(items) do
 		x = it.x
 		y = it.y
 
@@ -1039,10 +1023,10 @@ function updateitems()
 			add(rmd,rm)
 		end
 	end
-	
-	for i = 1, #rmd do
-		tt = rmd[i].tt
-		deli(items,rmd[i].i)
+
+	for i,r in ipairs(rmd) do	
+		tt = r.tt
+		deli(items,r.i)
 		if (tt == item_heart) then
 			player.hp+=20
 			healing(player,5)
@@ -1179,8 +1163,7 @@ function initenemies()
 end
 
 function drawenemies()
-	for i = 1,#enemies do
-		enemy = enemies[i]
+	for i,enemy in ipairs(enemies) do
 		if ((enemy.dead == false or enemy.deathframes > 0) and enemy.far == false) then
 
 			if (enemy.deathframes > 0) then
@@ -1527,49 +1510,44 @@ end
 function drawdmg()
 	camera(player.x-64,player.y-64)
  r = {}
-	for i=1,#dmgs do
-		d = dmgs[i]
+	for i,d in ipairs(dmgs) do
 		if (d.frames >= 0) then
-		oy = cos(i*0.1)*4
-		print_o(flr(d.n),d.x+12,oy+-1+d.y-cos(d.frames*0.04)*4,8+(16-d.frames)*0.2)
-		d.frames-=1
-		if (d.frames == 0) then
-			add(r,i)
-		end
+			oy = cos(i*0.1)*4
+			print_o(flr(d.n),d.x+12,oy+-1+d.y-cos(d.frames*0.04)*4,8+(16-d.frames)*0.2)
+			d.frames-=1
+			if (d.frames == 0) then
+				add(r,i)
+			end
 		end
 	end
 	
-	for i=1,#r do
-		deli(dmgs,r[i])
+	for dd in all(r) do
+		deli(dmgs,dd)
 	end
-
-
 end
 
 function drawhealing()
 	camera(player.x-64,player.y-64)
  r = {}
-	for i=1,#heals do
-		d = heals[i]
-		if (d.frames >= 0) then
-		oy = cos(i*0.1)*4
-		co = 8
-		if (d.k == 1) then
-			co = 10
-		end
-		print_o("+"..flr(d.n),d.x+12,oy+-1+d.y-cos(d.frames*0.04)*4,co)
-		d.frames-=1
-		if (d.frames == 0) then
-			add(r,i)
-		end
-		end
-	end
 	
-	for i=1,#r do
-		deli(heals,r[i])
+	for i,d in ipairs(heals) do
+		if (d.frames >= 0) then
+			oy = cos(i*0.1)*4
+			co = 8
+			if (d.k == 1) then
+				co = 10
+			end
+			print_o("+"..flr(d.n),d.x+12,oy+-1+d.y-cos(d.frames*0.04)*4,co)
+			d.frames-=1
+			if (d.frames == 0) then
+				add(r,i)
+			end
+		end
 	end
 
-
+	for dd in all(r)	do
+		deli(heals,dd)
+	end
 end
 
 		names = { "red snapper", "brass cleaver", "golden long" }
@@ -1637,7 +1615,7 @@ function drawui()
 	local s="attack"
 	local s2="spell"
 
-	for i=1,#s,1 do
+	for i=1,#s do
 		print(sub(s,i,i),2,8+(i/2)*22,1)
 		print(sub(s,i,i),3,8+(i/2)*22,12)
 	end
@@ -1646,7 +1624,7 @@ function drawui()
 		spr(54,120,8+(i/20)*4)
 	end
 
-	for i=1,#s2,1 do
+	for i=1,#s2 do
 		print(sub(s2,i,i),122,8+(i/2)*22,1)
 		print(sub(s2,i,i),123,8+(i/2)*22,7)
 	end
@@ -1671,7 +1649,7 @@ function drawui()
 		yo = 16*shopitem
 		sspr(9*8,16,8,8,shopitempos.x-16,yo+shopitempos.y+cos(time()*1)*2,16+cos(time()*1)*2,16+sin(time()*0.5)*2)
 
-		for i=0,shopitemmax,1 do
+		for i=0,shopitemmax do
 			pal(10,i+8)
 			if (i == shopitem) then
 				sspr(10*8,0,8,8,shopitempos.x-cos(time()*1)*2,16*i+shopitempos.y-sin(time()*1)*2,16+cos(time()*1)*2,16+sin(time()*1)*2)
@@ -1698,9 +1676,8 @@ function drawitems()
 		itt = 0
 		ifr +=1
 	end
-	for i = 1, #items do
-		it = items[i]
 
+	for it in all(items) do
 		if (it.tt == item_heart) then
 			spr(96+ifr%3,it.x,it.y)
 		end
