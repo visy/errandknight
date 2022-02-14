@@ -1406,11 +1406,11 @@ function drawlevel()
 		palt(0,false)
 
 
-		if (frame % 8 == 0) then
+		if (frame % 4 == 0) then
 		for y=0,8 do
 			for x=0,8 do
-				c =sget(x,24+y)+ (sin(0.1+x*0.04)*1*cos(-0.14+y*0.04)*0.5)*cos(t*0.001)*50
-			 sset(x,24+y,t*1.1+c*0.1)
+				c =(sin(0.1+x*0.04)*1*cos(-0.14+y*0.04)*5)
+			 sset(x,24+y,(c-t)%2+8+t*3%4)
 			end
 		end
 		end
