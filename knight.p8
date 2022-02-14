@@ -10,12 +10,12 @@ cheat = 0
 
 enemylimit = 16
 
-player = { x = 8*3, y = -512, walk = 0, dir = -1, attack = 0, atime = 0, 
-weapon = 5, aspeed = 3, acooldown = 24, acooltimer = 0, hb_x = 9, hb_y = 1, hb_s = 11, hp = 100, maxhp = 100, w = 6, h = 17, xv=0,yv=0,jumpheight=2,speed=0.8,friction=0.5,iframes=0,
-moveframes=0,totalsouls = 0,souls=0, level=1,dead = false,deathframes=0,keys=0,
-onladder=false,prevladder=false,
-jst = 10, ast = 20, st = 100, maxst = 100,streco=0.25,isjumping=false,
-spelldur=100,spelltick=0,spelltime = -2,spelldmg=5,spell=false,spellx=0,spelly=0,spellactive=false
+player = { x = 8*3, y = -512, walk = 0, dir = -1, attack = 0, atime = 0,
+  weapon = 5, aspeed = 3, acooldown = 24, acooltimer = 0, hb_x = 9, hb_y = 1, hb_s = 11, hp = 100, maxhp = 100, w = 6, h = 17, xv=0,yv=0,jumpheight=2,speed=0.8,friction=0.5,iframes=0,
+  moveframes=0,totalsouls = 0,souls=0, level=1,dead = false,deathframes=0,keys=0,
+  onladder=false,prevladder=false,
+  jst = 10, ast = 20, st = 100, maxst = 100,streco=0.25,isjumping=false,
+  spelldur=100,spelltick=0,spelltime = -2,spelldmg=5,spell=false,spellx=0,spelly=0,spellactive=false
 }
 
 enemies = {}
@@ -45,155 +45,150 @@ tile_bg = 255
 tile_door = 248
 
 function solid(x,y)
- if (x < 0) x = 0
- if (y < 0) y = 0
- val = mget(x/8,(y+8)/8)
- return fget(val,0) or fget(val,6)
+  if (x < 0) x = 0
+  if (y < 0) y = 0
+  val = mget(x/8,(y+8)/8)
+  return fget(val,0) or fget(val,6)
 end
 
 function collidingsolid(x,y)
- return
- solid(x,y)or
- solid(x+7,y)or
- solid(x,y+7)or
- solid(x+7,y+7)
+  return
+  solid(x,y)or
+  solid(x+7,y)or
+  solid(x,y+7)or
+  solid(x+7,y+7)
 end
-
 
 function btnf(n)return btn(n)and 1 or 0 end
 
 function sfxi(i)
-	sfx(8+i)
+  sfx(8+i)
 end
 
 doors = {}
 
 function initdoors()
-	for my = 1,59 do
-	for mx = 1,128 do
-		mi = mget(mx,my)
-		if (mi == tile_door) then
-		
-			door = { x=mx*8,y=my*8, mx = mx, my = my, openframes=-2,opened= false,opendir=0 }
-			add(doors,door)
-		end
+  for my = 1,59 do
+    for mx = 1,128 do
+      mi = mget(mx,my)
+      if (mi == tile_door) then
 
-	end
-	end
+        door = { x=mx*8,y=my*8, mx = mx, my = my, openframes=-2,opened= false,opendir=0 }
+        add(doors,door)
+      end
+
+    end
+  end
 end
 
-
 function drawdoors()
-	for door in all(doors) do
-		if (door.far == false) then
-			mx = door.mx
-			my = door.my
-			oo = 0
-			dof = false
-			if (door.openframes > 0) then
-				oo = 32-door.openframes
-			end
+  for door in all(doors) do
+    if (door.far == false) then
+      mx = door.mx
+      my = door.my
+      oo = 0
+      dof = false
+      if (door.openframes > 0) then
+        oo = 32-door.openframes
+      end
 
-			if door.opendir == -1 then
-			 dof = true
-			end
-			if (door.opened == true) return
-			if (dof == false) then
-				sspr(0,8,8,16,mx*8,my*8,8-oo/4,24)
-			else
-				sspr(0,8,8,16,oo/4+mx*8,my*8,8-oo/4,24)
-			end
-		end
-	end
+      if door.opendir == -1 then
+        dof = true
+      end
+      if (door.opened == true) return
+      if (dof == false) then
+        sspr(0,8,8,16,mx*8,my*8,8-oo/4,24)
+      else
+        sspr(0,8,8,16,oo/4+mx*8,my*8,8-oo/4,24)
+      end
+    end
+  end
 end
 
 rndr = {}
 
 mapp = { 0, 3, 3,1, 2, 1, 2, 3,
-								7,14,14,8,25, 2, 3, 2,
-								7,14,14,9,10,11,12,13,
-								7,14,14,8, 1, 2, 3, 2
+  7,14,14,8,25, 2, 3, 2,
+  7,14,14,9,10,11,12,13,
+  7,14,14,8, 1, 2, 3, 2
 }
 
-tilesets = { 0,1,2,3,0,0,0,0, 
-														0,0,0,2,0,0,0,0,
-														0,0,0,1,0,0,0,0,
-														0,0,0,0,0,0,0,0
+tilesets = { 0,1,2,3,0,0,0,0,
+  0,0,0,2,0,0,0,0,
+  0,0,0,1,0,0,0,0,
+  0,0,0,0,0,0,0,0
 }
 
 function initmap()
-	-- copy map to 0x8000
-	memcpy(0x8000,0x2000,8192)
-	
-	offs = 0
-	xo=0
-	yo=0
+  -- copy map to 0x8000
+  memcpy(0x8000,0x2000,8192)
 
-	for y=1,48 do
-		for x=1,128 do
-			mset(x,y,255)
-		end
-	end
-	
-	for y=1,3,1 do
-		for x=1,8,1 do
-			tile = mapp[offs+1]
-			tileset = tilesets[offs+1]
-			offs+=1
-			for yy=0,16 do
-				for xx=0,16 do
-					xt = xx+((tile%8)*16)
-					yt = yy+(flr(tile/8)*16)
-				 t = peek(0x8000+(yt*128+xt))
-				 if (t >= 240 and t <= 247) then
-						if (tileset > 0) then
-							t = t - 240
-							t+=72+(tileset-1)*8
-						end
-				 end
-				 
-					mset(xx+xo*16,yy+yo*16,t)
-				end
-			end
-			xo+=1
-		end
-		xo=0
-		yo+=1
-	end
+  offs = 0
+  xo=0
+  yo=0
 
+  for y=1,48 do
+    for x=1,128 do
+      mset(x,y,255)
+    end
+  end
+
+  for y=1,3,1 do
+    for x=1,8,1 do
+      tile = mapp[offs+1]
+      tileset = tilesets[offs+1]
+      offs+=1
+      for yy=0,16 do
+        for xx=0,16 do
+          xt = xx+((tile%8)*16)
+          yt = yy+(flr(tile/8)*16)
+          t = peek(0x8000+(yt*128+xt))
+          if (t >= 240 and t <= 247) then
+            if (tileset > 0) then
+              t = t - 240
+              t+=72+(tileset-1)*8
+            end
+          end
+
+          mset(xx+xo*16,yy+yo*16,t)
+        end
+      end
+      xo+=1
+    end
+    xo=0
+    yo+=1
+  end
 
 end
 
 function _init()
--- local clen = px9_comp(0,0,128,60, 0x8000, mget)
---	cstore(0x2000, 0x8000, clen, "kmap.p8")
- 
-	if (cheat == 1) then
---		player.keys = 99
---		player.maxhp = 1
---		player.hp = 39
-	end
-	
-	
-	for i=1,500 do
-		rndr[i] = rnd()*32
-	end
+  -- local clen = px9_comp(0,0,128,60, 0x8000, mget)
+  -- cstore(0x2000, 0x8000, clen, "kmap.p8")
 
-	initmap()
+  if (cheat == 1) then
+  --  player.keys = 99
+  --  player.maxhp = 1
+  --  player.hp = 39
+  end
 
-	initdoors()
-	initenemies()
-	inittab()
+  for i=1,500 do
+    rndr[i] = rnd()*32
+  end
 
-	music(0,500)
+  initmap()
 
-	
+  initdoors()
+  initenemies()
+  inittab()
+
+  music(0,500)
+
 end
 
 function collide_aabox(
   a,
   b)
-  
+
   x1 = a.x
   y1 = a.y
   w1 = a.w
@@ -203,254 +198,249 @@ function collide_aabox(
   y2 = b.y
   w2 = b.w
   h2 = b.h
-  
+
   local hit=false
   local xd=abs((x1+(w1/2))-(x2+(w2/2)))
   local xs=w1*0.5+w2*0.5
   local yd=abs((y1+(h1/2))-(y2+(h2/2)))
   local ys=h1/2+h2/2
-  if xd<xs and 
-     yd<ys then 
-    hit=true 
+  if xd<xs and
+  yd<ys then
+    hit=true
   end
-  
+
   return hit
 end
 
-
 function physics(po,isplayer)
-	po.px = po.x
-	po.py = po.y
+  po.px = po.x
+  po.py = po.y
 
-	onladder = false
+  onladder = false
 
-	lx = flr((po.x+4)/8)
-	ly = flr((po.y)/8)+2
-	if (isplayer == true and mget(lx,ly) == 127) then
+  lx = flr((po.x+4)/8)
+  ly = flr((po.y)/8)+2
+  if (isplayer == true and mget(lx,ly) == 127) then
 
-		onladder = true
-	end
-
-	if (isplayer == true) then
-		player.onladder = onladder
-	end
-
-	if (player.onladder and isplayer) then
-		delta = (btnf(2)-btnf(3))*po.speed/2
-		if (solid(po.x,po.y-delta) == false) then 
-		 po.y-=delta
-			falling = false
-			po.yv = 0
-		end
- end
-
-	ly = flr((po.y)/8)+2.2
-
-	if (isplayer and mget(lx,ly) == 111 and onladder and falling == false) then
-		if (delta > 0) then
-			player.y-=8
-			player.x+=1
-			falling = false
-			player.yv = 0
-			player.xv = 0
-			return
-		end
-	end
-
-
-	if (isplayer == true and (player.y > 0 and intro < 2)) then
-	 po.xv+=(btnf(1)-btnf(0))*po.speed
- end
-
- po.xv*=po.friction
-
-	if (isplayer) then
-		if (po.st == 0) then
-			po.xv/=2
-		end
-	end
-
-	if ((btn(0) == true or btn(1) == true) and isplayer and player.y > 0) then
-		if (po.xv>=0) then po.dir = 1
-		else po.dir = -1 end
-	end
-	
-	if (isplayer) then
-		pre = po.isjumping
-		thebtn = btn(4)
-		if (thebtn == true and pre == false) then
-
-			if (po.st > 0) then
-				po.isjumping = true
-				po.jumpframes=16
-			end
-
-		end
-		
-	else
-		if po.jumptrigger == true then
-			po.isjumping = po.jumptrigger
-			po.jumpframes = 16+flr(rnd(16))
-			po.jumptrigger = false
-		end
-	end
-	
-	if po.jumpframes then
-		po.isjumping = po.jumpframes > 0
-		po.jumpframes-=1
-	end
-
- if onladder == false or isplayer == false	then
-	 if(collidingsolid(po.x,po.y+1))then
-	     if(po.jumpframes == 15 and po.isjumping and not collidingsolid(po.x,po.y-1))then
-						 if isplayer then
-	      	sfxi(0)
-								po.st-=po.jst
-
-	      else
-	       sfxi(6)
-	      end
-	      po.yv-=po.jumpheight
-				   po.isjumping =false
-	     end
-	 else
-	  po.yv+=gravity
-	 end
- end
-
- --collisions and movement
- --horizontal
- if(collidingsolid(po.x+po.xv,po.y))then
-  while not collidingsolid(po.x+sgn(po.xv),po.y)do
-   po.x+=sgn(po.xv)
+    onladder = true
   end
-  po.xv=0
-  
-  if not isplayer and po.dir and po.bh == bh_patrol then
-	  po.dir = -po.dir
+
+  if (isplayer == true) then
+    player.onladder = onladder
   end
- else
-  po.x+=po.xv
- end
- --vertical
 
-	if (onladder == false or isplayer == false) then
-	 if(collidingsolid(po.x,po.y+po.yv))then
-	  local falling=po.yv>0
-	  while not collidingsolid(po.x,po.y+sgn(po.yv))do
-	   po.y+=sgn(po.yv)
-	  end
-	  po.yv=0
-	  if (isplayer) then
-			sfx(27)
-			end
-	 else
-	  po.y+=po.yv
-	 end
- end
+  if (player.onladder and isplayer) then
+    delta = (btnf(2)-btnf(3))*po.speed/2
+    if (solid(po.x,po.y-delta) == false) then
+      po.y-=delta
+      falling = false
+      po.yv = 0
+    end
+  end
 
+  ly = flr((po.y)/8)+2.2
 
-	if (solid(po.x,po.y+1)) then
-	po.x = po.px
-	po.y = po.py
-	end
+  if (isplayer and mget(lx,ly) == 111 and onladder and falling == false) then
+    if (delta > 0) then
+      player.y-=8
+      player.x+=1
+      falling = false
+      player.yv = 0
+      player.xv = 0
+      return
+    end
+  end
 
+  if (isplayer == true and (player.y > 0 and intro < 2)) then
+    po.xv+=(btnf(1)-btnf(0))*po.speed
+  end
+
+  po.xv*=po.friction
+
+  if (isplayer) then
+    if (po.st == 0) then
+      po.xv/=2
+    end
+  end
+
+  if ((btn(0) == true or btn(1) == true) and isplayer and player.y > 0) then
+    if (po.xv>=0) then po.dir = 1
+    else po.dir = -1 end
+  end
+
+  if (isplayer) then
+    pre = po.isjumping
+    thebtn = btn(4)
+    if (thebtn == true and pre == false) then
+
+      if (po.st > 0) then
+        po.isjumping = true
+        po.jumpframes=16
+      end
+
+    end
+
+  else
+    if po.jumptrigger == true then
+      po.isjumping = po.jumptrigger
+      po.jumpframes = 16+flr(rnd(16))
+      po.jumptrigger = false
+    end
+  end
+
+  if po.jumpframes then
+    po.isjumping = po.jumpframes > 0
+    po.jumpframes-=1
+  end
+
+  if onladder == false or isplayer == false then
+    if(collidingsolid(po.x,po.y+1))then
+      if(po.jumpframes == 15 and po.isjumping and not collidingsolid(po.x,po.y-1))then
+        if isplayer then
+          sfxi(0)
+          po.st-=po.jst
+
+        else
+          sfxi(6)
+        end
+        po.yv-=po.jumpheight
+        po.isjumping =false
+      end
+    else
+      po.yv+=gravity
+    end
+  end
+
+  --collisions and movement
+  --horizontal
+  if(collidingsolid(po.x+po.xv,po.y))then
+    while not collidingsolid(po.x+sgn(po.xv),po.y)do
+      po.x+=sgn(po.xv)
+    end
+    po.xv=0
+
+    if not isplayer and po.dir and po.bh == bh_patrol then
+      po.dir = -po.dir
+    end
+  else
+    po.x+=po.xv
+  end
+  --vertical
+
+  if (onladder == false or isplayer == false) then
+    if(collidingsolid(po.x,po.y+po.yv))then
+      local falling=po.yv>0
+      while not collidingsolid(po.x,po.y+sgn(po.yv))do
+        po.y+=sgn(po.yv)
+      end
+      po.yv=0
+      if (isplayer) then
+        sfx(27)
+      end
+    else
+      po.y+=po.yv
+    end
+  end
+
+  if (solid(po.x,po.y+1)) then
+    po.x = po.px
+    po.y = po.py
+  end
 
 end
 
 function humanlogic(po)
 
-	po.walk = (po.xv and po.x) % 16
+  po.walk = (po.xv and po.x) % 16
 
-	if (po.attack > 0) then
-		po.atime+=1
-		if (po.atime >= po.aspeed-po.level) then 
-			po.attack+=1 
-			po.atime = 0 
-		end
-		
-		if (po.attack == 6) then 
-		 po.attack = 0 
-		 po.acooltimer = po.acooldown-po.level
-		end
-	end
+  if (po.attack > 0) then
+    po.atime+=1
+    if (po.atime >= po.aspeed-po.level) then
+      po.attack+=1
+      po.atime = 0
+    end
 
-	if (po.acooltimer > 0) then
-	 po.acooltimer-=1
-	end		
+    if (po.attack == 6) then
+      po.attack = 0
+      po.acooltimer = po.acooldown-po.level
+    end
+  end
 
-	hasweapon = false
-	if (po.type and po.type == enemy_skelly) then
-	 hasweapon = true
-	end
-	
-	isenemy = false
-	if not po.type then hasweapon = true isenemy = true end
+  if (po.acooltimer > 0) then
+    po.acooltimer-=1
+  end
 
-	if (hasweapon == true) then
-	 -- update hitbox
-	 if (po.dir == 1) weapoffs = 0
-	 if (po.dir == -1) weapoffs = -22
-	
-	 po.hx1 = po.x+po.hb_x+weapoffs
-	 po.hy1 = po.y+po.hb_y
-	 po.hx2 = po.x+po.hb_x+po.hb_s+weapoffs
-	 po.hy2 = po.y+po.hb_y+po.hb_s
-	end
+  hasweapon = false
+  if (po.type and po.type == enemy_skelly) then
+    hasweapon = true
+  end
+
+  isenemy = false
+  if not po.type then hasweapon = true isenemy = true end
+
+  if (hasweapon == true) then
+    -- update hitbox
+    if (po.dir == 1) weapoffs = 0
+    if (po.dir == -1) weapoffs = -22
+
+    po.hx1 = po.x+po.hb_x+weapoffs
+    po.hy1 = po.y+po.hb_y
+    po.hx2 = po.x+po.hb_x+po.hb_s+weapoffs
+    po.hy2 = po.y+po.hb_y+po.hb_s
+  end
 
 end
 
 shopmode = 0
 
 function dialog(text,text2,y,c)
-	rectfill(0,y,128,y+18,0)
-	printc4(text,y+2,c)
-	printc4(text2,y+10,c)
+  rectfill(0,y,128,y+18,0)
+  printc4(text,y+2,c)
+  printc4(text2,y+10,c)
 end
 
 function standin()
- local x = flr(player.x/8)+0
- local y = flr(player.y/8)+1
-	local tt = mget(x,y)
-	return tt
+  local x = flr(player.x/8)+0
+  local y = flr(player.y/8)+1
+  local tt = mget(x,y)
+  return tt
 end
 
 function standon()
- local x = flr(player.x/8)+0
- local y = flr(player.y/8)+2
-	local tt = mget(x,y)
-	return tt
+  local x = flr(player.x/8)+0
+  local y = flr(player.y/8)+2
+  local tt = mget(x,y)
+  return tt
 end
 
 function shoplogic()
- tt = standin()
-	if tt == 250 and shopmode == 0 then
-		shopitempos = {x=player.x-64,y=player.y-24}
-		shopmode = 1
-		sfxi(10)
-	end
+  tt = standin()
+  if tt == 250 and shopmode == 0 then
+    shopitempos = {x=player.x-64,y=player.y-24}
+    shopmode = 1
+    sfxi(10)
+  end
 
-	if tt != 250 and shopmode > 0 then
-		shopmode = 0
-		sfxi(11)
-	end
-	
-	if (shopmode == 1) then 
-		if (btnp(2)) then 
-			shopitem-=1
-			if (shopitem < 0) then
-				shopitem = shopitemmax
-			end
-		end
-		if (btnp(3)) then 
-			shopitem+=1
-			if (shopitem > shopitemmax) then
-				shopitem = 0
-			end
-		end
-	end
-	
-	
+  if tt != 250 and shopmode > 0 then
+    shopmode = 0
+    sfxi(11)
+  end
+
+  if (shopmode == 1) then
+    if (btnp(2)) then
+      shopitem-=1
+      if (shopitem < 0) then
+        shopitem = shopitemmax
+      end
+    end
+    if (btnp(3)) then
+      shopitem+=1
+      if (shopitem > shopitemmax) then
+        shopitem = 0
+      end
+    end
+  end
+
 end
 
 price = 0
@@ -459,287 +449,281 @@ shopitemmax = 2
 
 function trybuy()
 
-	if (player.souls >= price) then
-		player.souls-=price
-		player.weapon=37
-		sfxi(12)
-		shopmode = 0
-	else
-		sfxi(11)
-	end
+  if (player.souls >= price) then
+    player.souls-=price
+    player.weapon=37
+    sfxi(12)
+    shopmode = 0
+  else
+    sfxi(11)
+  end
 
 end
 
 gameover = 0
 
 function spellchangelogic()
-	local tt = standon()
+  local tt = standon()
 
-	if (fget(tt,5) == true) then
-		if (player.spell == false) then
-			player.spell = true
-			player.prevweapon = player.weapon
-			attack_hitbox = {}
-		end
-		
-		player.spelltime = 500
-	end
+  if (fget(tt,5) == true) then
+    if (player.spell == false) then
+      player.spell = true
+      player.prevweapon = player.weapon
+      attack_hitbox = {}
+    end
+
+    player.spelltime = 500
+  end
 end
 
 function updateplayer()
 
-	if (player.dead == true) then
-		player.deathframes+=1
-		return
-	end
+  if (player.dead == true) then
+    player.deathframes+=1
+    return
+  end
 
-	if (player.st < player.maxst) then
-		player.st+=(player.streco+(0.1*player.level))
-	end
+  if (player.st < player.maxst) then
+    player.st+=(player.streco+(0.1*player.level))
+  end
 
-	if (player.iframes > 0) then
-		player.iframes -= 1
-	end
+  if (player.iframes > 0) then
+    player.iframes -= 1
+  end
 
-	physics(player,true)
+  physics(player,true)
 
-	if (player.spell == true) then
-		player.weapon = 6
-	end
+  if (player.spell == true) then
+    player.weapon = 6
+  end
 
-	stlimit = player.ast
-	if (player.spell == true) then
-	stlimit+=player.ast
-	end
+  stlimit = player.ast
+  if (player.spell == true) then
+    stlimit+=player.ast
+  end
 
- if (btn(5) and player.attack == 0 and player.acooltimer == 0 and player.st >= stlimit) then 
-		if (player.spell == false) then
-  	player.attack = 1
-	 	player.st-=player.ast
-		end
+  if (btn(5) and player.attack == 0 and player.acooltimer == 0 and player.st >= stlimit) then
+    if (player.spell == false) then
+      player.attack = 1
+      player.st-=player.ast
+    end
 
-		if (player.spell == true and player.spellactive == false) then
-	 	player.attack = 1
-	 	player.st-=player.ast*2
-			player.spellx = player.x+player.dir*4
-			player.spelly = player.y+8
-			player.spelldir = player.dir
-			player.spellspeed = 1
-			player.spellactive=true
-			sfxi(20)
+    if (player.spell == true and player.spellactive == false) then
+      player.attack = 1
+      player.st-=player.ast*2
+      player.spellx = player.x+player.dir*4
+      player.spelly = player.y+8
+      player.spelldir = player.dir
+      player.spellspeed = 1
+      player.spellactive=true
+      sfxi(20)
 
-			player.spelltick = 0
-			
-		end
+      player.spelltick = 0
 
- 	if (shopmode == 0) then
- 		sfxi(3)
- 	else
- 		trybuy()
- 	end
- end
+    end
 
-	humanlogic(player)
+    if (shopmode == 0) then
+      sfxi(3)
+    else
+      trybuy()
+    end
+  end
 
-	shoplogic()
+  humanlogic(player)
 
-	spellchangelogic()
+  shoplogic()
 
-	if (player.spellactive == true) then
-		player.spelltick+=1
-		if (player.spelltick > player.spelldur) then
-			player.spelltick = 0
-			player.spellactive = false
-			attack_hitbox = {}
-		end
-	end
+  spellchangelogic()
 
-	if (player.spelltime >= 0 and player.spell == true) then
-		player.spelltime-=1
-	end
-	if (player.spelltime == -1 and player.spell == true) then
-		player.spell = false
-		player.spelltime = -2
-		player.spellactive = false
-		player.attack = 0
-		player.acooltimer = 0
-		attack_hitbox = false
-		player.weapon = player.prevweapon	
-	end
+  if (player.spellactive == true) then
+    player.spelltick+=1
+    if (player.spelltick > player.spelldur) then
+      player.spelltick = 0
+      player.spellactive = false
+      attack_hitbox = {}
+    end
+  end
 
-	if (player.spellactive == true) then
-		player.spellx+=player.spelldir*player.spellspeed
-		if (pd(abs(player.x),abs(player.y),abs(player.spellx),abs(player.spelly)) > 64) then
-			player.spellactive = false
-			player.spellx = -1000
-			player.spelly = -1000
-			attack_hitbox = {}
-		end
-	end
+  if (player.spelltime >= 0 and player.spell == true) then
+    player.spelltime-=1
+  end
+  if (player.spelltime == -1 and player.spell == true) then
+    player.spell = false
+    player.spelltime = -2
+    player.spellactive = false
+    player.attack = 0
+    player.acooltimer = 0
+    attack_hitbox = false
+    player.weapon = player.prevweapon
+  end
 
-	if (player.spell == false) then
-	-- player's attack
-	attack_hitbox = { x = player.hx1, y = player.hy1, w = player.hb_s, h = player.hb_s }
-	else
-	if (player.spellactive == true) then
-		attack_hitbox = { x = player.spellx, y = player.spelly, w = 16, h = 6 }
-	else
-			attack_hitbox = { x = player.spellx, y = player.spelly, w = 16, h = 6 }
-	end
-	end
+  if (player.spellactive == true) then
+    player.spellx+=player.spelldir*player.spellspeed
+    if (pd(abs(player.x),abs(player.y),abs(player.spellx),abs(player.spelly)) > 64) then
+      player.spellactive = false
+      player.spellx = -1000
+      player.spelly = -1000
+      attack_hitbox = {}
+    end
+  end
 
-	-- game exit
-	if standin() == 48 then gameover = 2 end
+  if (player.spell == false) then
+    -- player's attack
+    attack_hitbox = { x = player.hx1, y = player.hy1, w = player.hb_s, h = player.hb_s }
+  else
+    if (player.spellactive == true) then
+      attack_hitbox = { x = player.spellx, y = player.spelly, w = 16, h = 6 }
+    else
+      attack_hitbox = { x = player.spellx, y = player.spelly, w = 16, h = 6 }
+    end
+  end
 
-	-- door
-	tx = flr(player.x/8)+1
-	ty = flr(player.y/8)
-	if (mget(tx,ty) == 248 or mget(tx,ty) == 249) then opendoor(tx,ty) end
-	tx = flr(player.x/8)-1
-	ty = flr(player.y/8)
-	if (mget(tx,ty) == 248 or mget(tx,ty) == 249) then opendoor(tx,ty) end
+  -- game exit
+  if standin() == 48 then gameover = 2 end
+
+  -- door
+  tx = flr(player.x/8)+1
+  ty = flr(player.y/8)
+  if (mget(tx,ty) == 248 or mget(tx,ty) == 249) then opendoor(tx,ty) end
+  tx = flr(player.x/8)-1
+  ty = flr(player.y/8)
+  if (mget(tx,ty) == 248 or mget(tx,ty) == 249) then opendoor(tx,ty) end
 
 end
 
 function ai(enemy)
-	bh = enemy.bh
+  bh = enemy.bh
 
-	if (bh == bh_idle) then
-	elseif (bh == bh_patrol) then
-		if not enemy.dir then
-			enemy.dir = flr(rnd(2))-1
-			if (enemy.dir == 0) enemy.dir = 1
-		else
-			enemy.xv+=enemy.dir*enemy.speed
+  if (bh == bh_idle) then
+  elseif (bh == bh_patrol) then
+    if not enemy.dir then
+      enemy.dir = flr(rnd(2))-1
+      if (enemy.dir == 0) enemy.dir = 1
+    else
+      enemy.xv+=enemy.dir*enemy.speed
 
-			if (abs(enemy.y-player.y) < 8 and abs(enemy.x-player.x) < 32) enemy.bh = bh_chase
-		end
+      if (abs(enemy.y-player.y) < 8 and abs(enemy.x-player.x) < 32) enemy.bh = bh_chase
+    end
 
-		if (enemy.xv>=0) then enemy.dir = 1
-		else enemy.dir = -1 end
-	
-	elseif (bh == bh_chase) then
-		if (enemy.x < player.x and not player.dead) enemy.xv+=enemy.speed*1.5
-  if (enemy.x > player.x and not player.dead) enemy.xv-=enemy.speed*1.5
+    if (enemy.xv>=0) then enemy.dir = 1
+    else enemy.dir = -1 end
 
-		if (enemy.xv>=0) then enemy.dir = 1
-		else enemy.dir = -1 end
+  elseif (bh == bh_chase) then
+    if (enemy.x < player.x and not player.dead) enemy.xv+=enemy.speed*1.5
+    if (enemy.x > player.x and not player.dead) enemy.xv-=enemy.speed*1.5
 
-		if (abs(enemy.x-player.x) < 30 and enemy.type != enemy_slime) enemy.attack = 1
+    if (enemy.xv>=0) then enemy.dir = 1
+    else enemy.dir = -1 end
 
-		if (enemy.attack > 0) then
-			enemy.attack+=1 
-			if (enemy.attack > 6) then
-				enemy.attack = 0
-			end
-		end
+    if (abs(enemy.x-player.x) < 30 and enemy.type != enemy_slime) enemy.attack = 1
 
-  
-  if (rnd(255) < 1 and enemy.jumptrigger == false) then
-  	enemy.jumptrigger = true
+    if (enemy.attack > 0) then
+      enemy.attack+=1
+      if (enemy.attack > 6) then
+        enemy.attack = 0
+      end
+    end
+
+    if (rnd(255) < 1 and enemy.jumptrigger == false) then
+      enemy.jumptrigger = true
+    end
+  elseif(bh == bh_wallhug) then
+    speedc = flr(rnd(256))
+    if (speedc < 2) then
+      enemy.speed = 0.2+rnd(0.5)
+    end
+    ox = 0
+    oy = 0
+    if (enemy.xdir > 0) then
+      ox = 8
+    end
+    if (enemy.ydir > 0) then
+      oy = 8
+    end
+    ex = flr((enemy.x+ox)/8)
+    ey = flr((enemy.y+oy)/8)
+
+    xs = enemy.xdir*enemy.speed
+    ys = enemy.ydir*enemy.speed
+
+    w = fget(mget(ex,ey),0) or fget(mget(ex,ey),6)
+
+    if (w == true) then
+      enemy.x-=enemy.xdir*enemy.speed
+      enemy.y-=enemy.ydir*enemy.speed
+
+      pxd = enemy.xdir
+      pyd = enemy.ydir
+      if(enemy.xdir == -1) then
+        enemy.xdir = 0
+        enemy.ydir = -1
+      elseif(enemy.xdir == 1) then
+        enemy.xdir = 0
+        enemy.ydir = 1
+      elseif(enemy.ydir == -1) then
+        enemy.xdir = 1
+        enemy.ydir = 0
+      elseif(enemy.ydir == 1) then
+        enemy.xdir = -1
+        enemy.ydir = 0
+      end
+
+      if (pxd != enemy.xdir or pyd != enemy.ydir) then
+        enemy.x=flr(enemy.x)
+        enemy.y=flr(enemy.y)
+      end
+
+    else
+
+      enemy.x+=enemy.xdir*enemy.speed
+      enemy.y+=enemy.ydir*enemy.speed
+    end
+
   end
-	elseif(bh == bh_wallhug) then
-		speedc = flr(rnd(256))
-		if (speedc < 2) then
-			enemy.speed = 0.2+rnd(0.5)
-		end
-		ox = 0
-		oy = 0
-		if (enemy.xdir > 0) then
-			ox = 8
-		end
-		if (enemy.ydir > 0) then
-			oy = 8
-		end
-		ex = flr((enemy.x+ox)/8)
-		ey = flr((enemy.y+oy)/8)
-
-
-		xs = enemy.xdir*enemy.speed
-		ys = enemy.ydir*enemy.speed
-	
-		w = fget(mget(ex,ey),0) or fget(mget(ex,ey),6)
-
-		if (w == true) then
-			enemy.x-=enemy.xdir*enemy.speed
- 		enemy.y-=enemy.ydir*enemy.speed
-
-			pxd = enemy.xdir
-			pyd = enemy.ydir
-			if(enemy.xdir == -1) then
-				enemy.xdir = 0
-				enemy.ydir = -1
-			elseif(enemy.xdir == 1) then
-				enemy.xdir = 0
-				enemy.ydir = 1
-			elseif(enemy.ydir == -1) then
-				enemy.xdir = 1
-				enemy.ydir = 0
-			elseif(enemy.ydir == 1) then
-				enemy.xdir = -1
-				enemy.ydir = 0
-			end
-	
-			if (pxd != enemy.xdir or pyd != enemy.ydir) then
-				enemy.x=flr(enemy.x)
-				enemy.y=flr(enemy.y)
-			end
-			
-
-		else
-
-			enemy.x+=enemy.xdir*enemy.speed
-			enemy.y+=enemy.ydir*enemy.speed
-		end
-		
-	end
-	
-	
 
 end
 
 opening = {}
 
 function doorat(x,y)
- for d in all(doors) do
- 	if (d.mx == x and d.my == y-1) then 
- 		d.di = i
-	 	return d 
- 	end
- end
- return -1
+  for d in all(doors) do
+    if (d.mx == x and d.my == y-1) then
+      d.di = i
+      return d
+    end
+  end
+  return -1
 end
 
 function opendoor(tx,ty)
-	dd = doorat(tx,ty)
-	if (dd == -1) then
-		return
-	end
-	if (dd.openframes == -2 and dd.opened == false and player.keys > 0) then
-		player.keys-=1
-	 dd.openframes=32
-	 dd.opendir = player.dir
-	 add(opening,dd)
- end
+  dd = doorat(tx,ty)
+  if (dd == -1) then
+    return
+  end
+  if (dd.openframes == -2 and dd.opened == false and player.keys > 0) then
+    player.keys-=1
+    dd.openframes=32
+    dd.opendir = player.dir
+    add(opening,dd)
+  end
 end
 
 function maybespawnitem(x,y,tt)
 
-	if tt == item_heart then
-		c = rnd(256)
-	end
+  if tt == item_heart then
+    c = rnd(256)
+  end
 
-	if tt == item_key then
-		c = 1
-	end
-	
-	if (c < 64) then
-		item = {x = x, y = y, tt = tt}
-		add(items,item)
-	end
+  if tt == item_key then
+    c = 1
+  end
+
+  if (c < 64) then
+    item = {x = x, y = y, tt = tt}
+    add(items,item)
+  end
 
 end
-
 
 -- player's attack
 attack_hitbox = { }
@@ -747,625 +731,614 @@ attack_hitbox = { }
 dmgs = {}
 heals = {}
 function damage(t,n)
-	dmg = {x = t.x, y=t.y,n=n,frames=16}
-	add(dmgs,dmg)
+  dmg = {x = t.x, y=t.y,n=n,frames=16}
+  add(dmgs,dmg)
 end
 
 function healing(t,n,k)
-	heal = {k=k, x = t.x, y=t.y,n=n,frames=16}
-	add(heals,heal)
+  heal = {k=k, x = t.x, y=t.y,n=n,frames=16}
+  add(heals,heal)
 end
 
 function getattackpower()
-		dmg = 4
-		extra = 0
-		if (player.weapon == 37) then
-			extra = 10
-		end
-		dmg+=(player.level-1)*2
-		dmg+=extra
-		if (player.spell == true) then
-		dmg=player.spelldmg
-		end
-		return dmg
+  dmg = 4
+  extra = 0
+  if (player.weapon == 37) then
+    extra = 10
+  end
+  dmg+=(player.level-1)*2
+  dmg+=extra
+  if (player.spell == true) then
+    dmg=player.spelldmg
+  end
+  return dmg
 end
 
+function updateenemies()
+  -- enemies
+  hit = { }
+  dead = { }
 
-function updateenemies() 
-	-- enemies
-	hit = { }
-	dead = { }
-
-	for i,e in ipairs(enemies) do
-		if (e.dead == true) then
-		 if (e.deathframes) then
-			 if (e.deathframes <= 0) then
-					add(dead,i)
-				end
-			end
-		end
-	end
-	
-	for d in all(dead) do
-		deli(enemies,d)
-	end
-
-	for i,enemy in ipairs(enemies) do
-		dd = abs(pd(enemy.x,enemy.y,player.x,player.y))
-		dv = 90
-		if dd >= dv then enemy.far = true
-		else enemy.far = false
-		end
-		if (enemy.dead == false and dd < dv) then
-			ai(enemy)
-
-			if (enemy.type != enemy_waller) then
-				physics(enemy,false)
-				humanlogic(enemy)
-			end
-
-			if (enemy.iframes > 0) then
-				enemy.iframes -= 1
-			end
-
-			if (enemy.animspeed) then
-				enemy.atimer+=1
-				if (enemy.atimer > enemy.animspeed) then
-					enemy.atimer = 0
-					enemy.aframe+=1
-				end
-			end
-	
-			cond = false
-		 --collision with attack
-			if (player.spell == false) then
-				if (player.attack == 2) then
-				cond = true
-				end
-			else
-				if (player.spellactive == true) then
-					cond = true
-				end
-			end
-
-			if (cond and collide_aabox(enemy,attack_hitbox) and enemy.iframes == 0) then
-				add(hit,i)
-		 	sfxi(2)
-
-	 	end
-			-- collision with player
-			checkweapon = false
-			if (enemy.type == enemy_skelly) then
-				enemy_a_hitbox = { x = enemy.hx1, y = enemy.hy1, w = enemy.hb_s, h = enemy.hb_s }
-				checkweapon = collide_aabox(enemy_a_hitbox,player)
-			end
-			if ((collide_aabox(enemy,player) or checkweapon) and enemy.iframes == 0 and player.iframes == 0) then
-				player.hp-=enemy.dmg
-				damage(player,enemy.dmg)
-
-				player.iframes = 32
-				sfxi(5)
-				if (player.hp <= 0) then
-					music(-1)
-					player.dead = true
-					gameover = 1
-					player.deathframes = 0
-				end
-				pushtarget(enemy,player,false)
-	 	end
-
+  for i,e in ipairs(enemies) do
+    if (e.dead == true) then
+      if (e.deathframes) then
+        if (e.deathframes <= 0) then
+          add(dead,i)
+        end
+      end
+    end
   end
-	end  
 
-	for i,h in all(hit) do
-		enemy = enemies[i]
-		if (player.xv > 0) then
-		enemy.x+=player.xv*3
-		else
-		enemy.x-=enemy.dx*3
-		end
+  for d in all(dead) do
+    deli(enemies,d)
+  end
 
-		dmg = getattackpower()
+  for i,enemy in ipairs(enemies) do
+    dd = abs(pd(enemy.x,enemy.y,player.x,player.y))
+    dv = 90
+    if dd >= dv then enemy.far = true
+    else enemy.far = false
+    end
+    if (enemy.dead == false and dd < dv) then
+      ai(enemy)
 
-		if (enemy.hp > 0 and enemy.dead == false) then
-			enemy.hp-=dmg
-			damage(enemy,dmg)
-			pushtarget(player,enemy,true)
-	
-			enemy.iframes = 16
-		else 
-			sfxi(7)
-			enemy.dead = true
-			enemy.deathframes = 16
-			maybespawnitem(enemy.x,enemy.y+8,item_heart)
-		end
-	end
+      if (enemy.type != enemy_waller) then
+        physics(enemy,false)
+        humanlogic(enemy)
+      end
+
+      if (enemy.iframes > 0) then
+        enemy.iframes -= 1
+      end
+
+      if (enemy.animspeed) then
+        enemy.atimer+=1
+        if (enemy.atimer > enemy.animspeed) then
+          enemy.atimer = 0
+          enemy.aframe+=1
+        end
+      end
+
+      cond = false
+      --collision with attack
+      if (player.spell == false) then
+        if (player.attack == 2) then
+          cond = true
+        end
+      else
+        if (player.spellactive == true) then
+          cond = true
+        end
+      end
+
+      if (cond and collide_aabox(enemy,attack_hitbox) and enemy.iframes == 0) then
+        add(hit,i)
+        sfxi(2)
+
+      end
+      -- collision with player
+      checkweapon = false
+      if (enemy.type == enemy_skelly) then
+        enemy_a_hitbox = { x = enemy.hx1, y = enemy.hy1, w = enemy.hb_s, h = enemy.hb_s }
+        checkweapon = collide_aabox(enemy_a_hitbox,player)
+      end
+      if ((collide_aabox(enemy,player) or checkweapon) and enemy.iframes == 0 and player.iframes == 0) then
+        player.hp-=enemy.dmg
+        damage(player,enemy.dmg)
+
+        player.iframes = 32
+        sfxi(5)
+        if (player.hp <= 0) then
+          music(-1)
+          player.dead = true
+          gameover = 1
+          player.deathframes = 0
+        end
+        pushtarget(enemy,player,false)
+      end
+
+    end
+  end
+
+  for i,h in all(hit) do
+    enemy = enemies[i]
+    if (player.xv > 0) then
+      enemy.x+=player.xv*3
+    else
+      enemy.x-=enemy.dx*3
+    end
+
+    dmg = getattackpower()
+
+    if (enemy.hp > 0 and enemy.dead == false) then
+      enemy.hp-=dmg
+      damage(enemy,dmg)
+      pushtarget(player,enemy,true)
+
+      enemy.iframes = 16
+    else
+      sfxi(7)
+      enemy.dead = true
+      enemy.deathframes = 16
+      maybespawnitem(enemy.x,enemy.y+8,item_heart)
+    end
+  end
 
 end
 
 function updatedoors()
-	for s in all(doors) do
-		dx = abs(s.x-player.x)
-		dy = abs(s.y-player.y)
-		dv = 60
-		dd = (dx+dy)/2
-		if (dd < dv) then s.far = false
-		else s.far = true
-		end
+  for s in all(doors) do
+    dx = abs(s.x-player.x)
+    dy = abs(s.y-player.y)
+    dv = 60
+    dd = (dx+dy)/2
+    if (dd < dv) then s.far = false
+    else s.far = true
+    end
 
-	end
+  end
 
-	done = {}
-	doneo = {}
+  done = {}
+  doneo = {}
 
-	for i,d in ipairs(opening) do
-		if (d.openframes) then 
-			if (d.openframes >= 0) then
-				d.openframes-=1
-				if (d.openframes == 15) then
-					sfxi(18)
-				end
-			end
-			if (d.openframes == 0) then
-				mset(d.mx,d.my,255)
-				mset(d.mx,d.my+1,255)
-				mset(d.mx,d.my+2,255)
-				d.opened = true
-				add(done,d.di)
-				add(doneo,i)
-			end
-		end
-	end
+  for i,d in ipairs(opening) do
+    if (d.openframes) then
+      if (d.openframes >= 0) then
+        d.openframes-=1
+        if (d.openframes == 15) then
+          sfxi(18)
+        end
+      end
+      if (d.openframes == 0) then
+        mset(d.mx,d.my,255)
+        mset(d.mx,d.my+1,255)
+        mset(d.mx,d.my+2,255)
+        d.opened = true
+        add(done,d.di)
+        add(doneo,i)
+      end
+    end
+  end
 
-	for i=1,#done do
-		deli(opening,doneo[i])
-		deli(doors,done[i])
-	end
+  for i=1,#done do
+    deli(opening,doneo[i])
+    deli(doors,done[i])
+  end
 end
 
 function drawspawners()
-	for i,s in ipairs(spawners) do
-		if (s.far == false) then
-			oo = cos(time()*0.2+i*0.3)*2
-			oo2 = sin(time()*0.3+i*0.2)*2
-	
-			if (s.spawncount < s.spawnlimit) then
-				sp = 64+((s.aframe+i)%2)*4
-				sx, sy = (sp % 16) * 8, (sp \ 16) * 8
-				ss = (s.spawncount-(s.spawnlimit-s.spawncount))*2
-				sspr(sx,sy,32,8,ss+s.x-24+oo,s.y+4-oo2,32-oo-ss,8+oo2)
-			end
-		end
-	end
+  for i,s in ipairs(spawners) do
+    if (s.far == false) then
+      oo = cos(time()*0.2+i*0.3)*2
+      oo2 = sin(time()*0.3+i*0.2)*2
+
+      if (s.spawncount < s.spawnlimit) then
+        sp = 64+((s.aframe+i)%2)*4
+        sx, sy = (sp % 16) * 8, (sp \ 16) * 8
+        ss = (s.spawncount-(s.spawnlimit-s.spawncount))*2
+        sspr(sx,sy,32,8,ss+s.x-24+oo,s.y+4-oo2,32-oo-ss,8+oo2)
+      end
+    end
+  end
 end
 
 function updatespawners()
-	a = {}
-	for i,s in ipairs(spawners) do
-		if (s.active == false) then
-		add(a,i)
-		end
-	end
+  a = {}
+  for i,s in ipairs(spawners) do
+    if (s.active == false) then
+      add(a,i)
+    end
+  end
 
-	for aa in all(a) do
-	 deli(spawners,aa)
-	end
+  for aa in all(a) do
+    deli(spawners,aa)
+  end
 
-	for s in all(spawners) do	
-		s.acount+=1
-		if (s.acount > s.aspeed) then
-		 s.aframe +=1
-		 s.acount = 0
-		 if (s.aframe >= 4) then s.aframe = 0 end
-		end
+  for s in all(spawners) do
+    s.acount+=1
+    if (s.acount > s.aspeed) then
+      s.aframe +=1
+      s.acount = 0
+      if (s.aframe >= 4) then s.aframe = 0 end
+    end
 
-		dx = abs(s.x-player.x)
-		dy = abs(s.y-player.y)
-		dv = 60
-		dd = (dx+dy)/2
-		if (dd < dv) then s.far = false
-		else s.far = true
-		end
+    dx = abs(s.x-player.x)
+    dy = abs(s.y-player.y)
+    dv = 60
+    dd = (dx+dy)/2
+    if (dd < dv) then s.far = false
+    else s.far = true
+    end
 
-		s.spawnlimit = 1+flr(player.level/2)
-		if (s.spawnlimit > s.spawnlimitmax) then
-			s.spawnlimit = s.spawnlimitmax
-		end
+    s.spawnlimit = 1+flr(player.level/2)
+    if (s.spawnlimit > s.spawnlimitmax) then
+      s.spawnlimit = s.spawnlimitmax
+    end
 
-		if (s.far == false) then 	
-			s.spawnframes-=1
-			if (s.spawncount < s.spawnlimit and s.spawnframes == 0) then
-				s.spawnframes = s.spawntime
-				if (#enemies >= enemylimit) then
-					return
-				end
-				s.spawncount += 1
-				sfxi(17)
-				if (s.spawncount == s.spawnlimit) then
-					maybespawnitem(s.x-8,s.y,item_key)
-					s.active = false
-				end
-				if (s.enemytype == enemy_slime) then
-					hpval = (player.level/2)*8+flr(rnd(4))
-		 		enemy ={x = s.x - 14, 
-		 		        y = s.y - 12, 
-					 						animspeed = 4+rnd(12), 
-						 					w = 12, h = 12, 
-								 			hp = hpval, 
-											 jumpheight=2+rnd(1),
-											 speed=0.1+rnd(0.1),
-											 friction=0.4,
-											 bh=bh_patrol,
-											 souls=flr(hpval*4),acooldown=4,
-											 dmg = flr(hpval/2),										 }
-										 
-					enemy.type = enemy_slime
-	
-					addenemycommon(enemy)
-			
-					add(enemies,enemy)
-			end	
-		end
-	 end
-	end
+    if (s.far == false) then
+      s.spawnframes-=1
+      if (s.spawncount < s.spawnlimit and s.spawnframes == 0) then
+        s.spawnframes = s.spawntime
+        if (#enemies >= enemylimit) then
+          return
+        end
+        s.spawncount += 1
+        sfxi(17)
+        if (s.spawncount == s.spawnlimit) then
+          maybespawnitem(s.x-8,s.y,item_key)
+          s.active = false
+        end
+        if (s.enemytype == enemy_slime) then
+          hpval = (player.level/2)*8+flr(rnd(4))
+          enemy ={x = s.x - 14,
+            y = s.y - 12,
+            animspeed = 4+rnd(12),
+            w = 12, h = 12,
+            hp = hpval,
+            jumpheight=2+rnd(1),
+            speed=0.1+rnd(0.1),
+            friction=0.4,
+            bh=bh_patrol,
+            souls=flr(hpval*4),acooldown=4,
+            dmg = flr(hpval/2),           }
+
+          enemy.type = enemy_slime
+
+          addenemycommon(enemy)
+
+          add(enemies,enemy)
+        end
+      end
+    end
+  end
 end
-
 
 function updateitems()
-	rmd = {}
-	for i,it in ipairs(items) do
-		x = it.x
-		y = it.y
+  rmd = {}
+  for i,it in ipairs(items) do
+    x = it.x
+    y = it.y
 
-		idd = pd(x+4,y,player.x+4,player.y+10)
-		if (idd < 8) then
-			rm = { i = i, tt = it.tt}
-			add(rmd,rm)
-		end
-	end
+    idd = pd(x+4,y,player.x+4,player.y+10)
+    if (idd < 8) then
+      rm = { i = i, tt = it.tt}
+      add(rmd,rm)
+    end
+  end
 
-	for i,r in ipairs(rmd) do	
-		tt = r.tt
-		deli(items,r.i)
-		if (tt == item_heart) then
-			player.hp+=20
-			healing(player,5)
-			if (player.hp>player.maxhp) then player.hp = player.maxhp end
-			sfxi(11)
-		elseif (tt == item_key) then
-			healing(player,1,1)
-			player.keys+=1
-			sfxi(9)
-		end
-	end
+  for i,r in ipairs(rmd) do
+    tt = r.tt
+    deli(items,r.i)
+    if (tt == item_heart) then
+      player.hp+=20
+      healing(player,5)
+      if (player.hp>player.maxhp) then player.hp = player.maxhp end
+      sfxi(11)
+    elseif (tt == item_key) then
+      healing(player,1,1)
+      player.keys+=1
+      sfxi(9)
+    end
+  end
 
 end
 
-
 function _update60()
-	updateplayer()
-	updateshadow()
-	updateenemies()	
-	updateitems()
-	updatespawners()
-	updatedoors()
+  updateplayer()
+  updateshadow()
+  updateenemies()
+  updateitems()
+  updatespawners()
+  updatedoors()
 end
 
 function addenemycommon(enemy, spawner)
-	enemy.moveframes=0
-	enemy.level = 0
-	enemy.atimer = 0
-	enemy.aframe = 0
-	enemy.dx = 0
-	enemy.dy = 0 
-	enemy.iframes = 0
-	enemy.jumptrigger = false
-	enemy.dead = false
-	enemy.xv=0
-	enemy.yv=0
-	enemy.acooltimer = 0
-	enemy.attack=0
-	enemy.atime=0
-	enemy.deathframes=0
+  enemy.moveframes=0
+  enemy.level = 0
+  enemy.atimer = 0
+  enemy.aframe = 0
+  enemy.dx = 0
+  enemy.dy = 0
+  enemy.iframes = 0
+  enemy.jumptrigger = false
+  enemy.dead = false
+  enemy.xv=0
+  enemy.yv=0
+  enemy.acooltimer = 0
+  enemy.attack=0
+  enemy.atime=0
+  enemy.deathframes=0
 end
 
 spawnerid = 1
 
 function initspawner(mi,x,y)
-	o = {}
-	o.x = x*8
-	o.y = y*8
-	o.acount = 0
-	o.aspeed = 4
-	o.aframe = 0
-	ww = flr(128+rnd(128))
-	o.spawnframes = ww
-	o.spawntime = ww
-	o.spawnlimit = 1
-	o.spawnlimitmax = 4
-	o.spawncount = 0
-	o.enemytype = mi
-	o.spawner = spawnerid
-	o.active = true
-	return o
+  o = {}
+  o.x = x*8
+  o.y = y*8
+  o.acount = 0
+  o.aspeed = 4
+  o.aframe = 0
+  ww = flr(128+rnd(128))
+  o.spawnframes = ww
+  o.spawntime = ww
+  o.spawnlimit = 1
+  o.spawnlimitmax = 4
+  o.spawncount = 0
+  o.enemytype = mi
+  o.spawner = spawnerid
+  o.active = true
+  return o
 end
 
 spawners = {}
 
 function initenemies()
-	for my = 1,59 do
-	for mx = 1,128 do
-		isspawner = false
-		mi = mget(mx,my)
-		if (mi >= enemy_waller and mi <= enemy_slime) then
+  for my = 1,59 do
+    for mx = 1,128 do
+      isspawner = false
+      mi = mget(mx,my)
+      if (mi >= enemy_waller and mi <= enemy_slime) then
 
-		-- waller		
-		if (mi == enemy_waller) then
-			enemy = {x = mx*8,
-												y = (my*8),
-					 						animspeed = 5, 
-												w = 6,
-												h = 6,
-												hp = 50,
-												xdir = -1,
-												ydir = 0,
-												jumpheight=0,
-												speed=0.8,
-												friction=0.1,
-												bh=bh_wallhug,
-												souls=20,
-												dmg = 5
-												}
+        -- waller
+        if (mi == enemy_waller) then
+          enemy = {x = mx*8,
+            y = (my*8),
+            animspeed = 5,
+            w = 6,
+            h = 6,
+            hp = 50,
+            xdir = -1,
+            ydir = 0,
+            jumpheight=0,
+            speed=0.8,
+            friction=0.1,
+            bh=bh_wallhug,
+            souls=20,
+            dmg = 5
+          }
 
-			enemy.type = enemy_waller
+          enemy.type = enemy_waller
 
-		end
+        end
 
-		-- skelly
-		if (mi == enemy_skelly) then
- 		enemy ={x = mx*8, 
- 		        y = (my*8) - 8, 
-			 						aspeed = 8, 
-				 					w = 9, h = 17, 
-						 			hp = 80, 
-									 jumpheight=0,
-									 speed=0.2,
-									 friction=0.4,
-									 bh=bh_patrol,
-									 souls=60, walk=0,
-									 attack = 0,dir=-1,
-									 weapon=37,acooldown=4,
-									 spell = false,
-										hb_x = 14, hb_y = 1, hb_s = 4,
-										dmg = 25
-								 }
+        -- skelly
+        if (mi == enemy_skelly) then
+          enemy ={x = mx*8,
+            y = (my*8) - 8,
+            aspeed = 8,
+            w = 9, h = 17,
+            hp = 80,
+            jumpheight=0,
+            speed=0.2,
+            friction=0.4,
+            bh=bh_patrol,
+            souls=60, walk=0,
+            attack = 0,dir=-1,
+            weapon=37,acooldown=4,
+            spell = false,
+            hb_x = 14, hb_y = 1, hb_s = 4,
+            dmg = 25
+          }
 
+          enemy.type = enemy_skelly
 
-			enemy.type = enemy_skelly
-		
-		end
+        end
 
-		-- slime
-		if (mi == enemy_slime) then
-			add(spawners,initspawner(mi,mx,my))
-			isspawner = true
-		end
-		
-		if (isspawner == false) then
-			addenemycommon(enemy)
-	
-			add(enemies,enemy)
-		end
+        -- slime
+        if (mi == enemy_slime) then
+          add(spawners,initspawner(mi,mx,my))
+          isspawner = true
+        end
 
-		end
-	end
-	end
+        if (isspawner == false) then
+          addenemycommon(enemy)
+
+          add(enemies,enemy)
+        end
+
+      end
+    end
+  end
 end
 
 function drawenemies()
-	for i,enemy in ipairs(enemies) do
-		if ((enemy.dead == false or enemy.deathframes > 0) and enemy.far == false) then
+  for i,enemy in ipairs(enemies) do
+    if ((enemy.dead == false or enemy.deathframes > 0) and enemy.far == false) then
 
-			if (enemy.deathframes > 0) then
-				for i=1, 16 do
-					pal(i,i+16-enemy.deathframes*0.8,0)
-				end
-			end
-	
-			if (enemy.type == enemy_waller) then
-				if (enemy.iframes > 0 and enemy.deathframes == 0) then
-					pal(9,16-enemy.iframes*2,0)
-					pal(10,15-enemy.iframes*2,0)
-				end
-				if (enemy.xdir != -0) then
-				a = 0
-				if (enemy.xdir == 1) then
-				a = 180
-				end
+      if (enemy.deathframes > 0) then
+        for i=1, 16 do
+          pal(i,i+16-enemy.deathframes*0.8,0)
+        end
+      end
 
-				rspr(99+enemy.aframe%4,enemy.x,enemy.y,a,1,1)
-				end
-				if (enemy.ydir != -0) then
-				a = 90
-				if (enemy.ydir == 1) then
-				a = 270
-				end
-				rspr(99+enemy.aframe%4,enemy.x,enemy.y,a,1,1)
-				end
---				print(enemy.wall,enemy.x,enemy.y,7)
-			pal()
-			end
+      if (enemy.type == enemy_waller) then
+        if (enemy.iframes > 0 and enemy.deathframes == 0) then
+          pal(9,16-enemy.iframes*2,0)
+          pal(10,15-enemy.iframes*2,0)
+        end
+        if (enemy.xdir != -0) then
+          a = 0
+          if (enemy.xdir == 1) then
+            a = 180
+          end
 
-			if (enemy.type == enemy_skelly) then
-				drawhumanoid(enemy,33)
-			end
+          rspr(99+enemy.aframe%4,enemy.x,enemy.y,a,1,1)
+        end
+        if (enemy.ydir != -0) then
+          a = 90
+          if (enemy.ydir == 1) then
+            a = 270
+          end
+          rspr(99+enemy.aframe%4,enemy.x,enemy.y,a,1,1)
+        end
+        --    print(enemy.wall,enemy.x,enemy.y,7)
+        pal()
+      end
 
-			if (enemy.type == enemy_slime) then
-				if (enemy.iframes > 0 and enemy.deathframes == 0) then
-					pal(11,16-enemy.iframes*2,0)
-				end
+      if (enemy.type == enemy_skelly) then
+        drawhumanoid(enemy,33)
+      end
 
-				sn = 12+(enemy.aframe%2)*2	
-				sx, sy = (sn % 16) * 8, (sn \ 16) * 8
-				hi = flr(enemy.hp/10)
-				if (hi <= 0) hi = 1
-				ss = 11+hi*2
-				xi = { 2,1,0,-1,-2 }
-				yi = { 5,3,1,-1,-3 }
-				sspr(sx,sy,16,16,enemy.x-2+xi[hi],enemy.y-2+yi[hi],ss,ss)
-				pal()
-			end
+      if (enemy.type == enemy_slime) then
+        if (enemy.iframes > 0 and enemy.deathframes == 0) then
+          pal(11,16-enemy.iframes*2,0)
+        end
 
-			if (enemy.deathframes > 0) then
-				enemy.deathframes-=1
-				enemy.y+=(8-enemy.deathframes)*0.05
-				if (enemy.deathframes == 0) then
-					sfxi(8)
-					player.souls+=enemy.souls
-					player.totalsouls+=enemy.souls
-					if (player.totalsouls >= (player.level*1.3)*160) player.level+=1
-				end
-			end
+        sn = 12+(enemy.aframe%2)*2
+        sx, sy = (sn % 16) * 8, (sn \ 16) * 8
+        hi = flr(enemy.hp/10)
+        if (hi <= 0) hi = 1
+        ss = 11+hi*2
+        xi = { 2,1,0,-1,-2 }
+        yi = { 5,3,1,-1,-3 }
+        sspr(sx,sy,16,16,enemy.x-2+xi[hi],enemy.y-2+yi[hi],ss,ss)
+        pal()
+      end
 
-			-- hitbox
-			if (draw_hitbox == true) then
-		  rect(enemy.x,enemy.y,enemy.x+enemy.w,enemy.y+enemy.h,8)
-	  end
+      if (enemy.deathframes > 0) then
+        enemy.deathframes-=1
+        enemy.y+=(8-enemy.deathframes)*0.05
+        if (enemy.deathframes == 0) then
+          sfxi(8)
+          player.souls+=enemy.souls
+          player.totalsouls+=enemy.souls
+          if (player.totalsouls >= (player.level*1.3)*160) player.level+=1
+        end
+      end
 
-		--	print(enemy.bh,enemy.x+6,enemy.y-6,8)
+      -- hitbox
+      if (draw_hitbox == true) then
+        rect(enemy.x,enemy.y,enemy.x+enemy.w,enemy.y+enemy.h,8)
+      end
 
+    -- print(enemy.bh,enemy.x+6,enemy.y-6,8)
+
+    end
   end
-	end
 
-	
 end
 
 function pushtarget(pusher,target,hit)
-	force = 10
-	if (hit == true) then 
-		force = 20*player.dir
-	end
-	
-	target.xv+=force
-end
+  force = 10
+  if (hit == true) then
+    force = 20*player.dir
+  end
 
+  target.xv+=force
+end
 
 function rspr(s,x,y,a,w,h)
- sw=(w or 1)*8 --sprite width
- sh=(h or 1)*8 --sprite height
+  sw=(w or 1)*8  --sprite width
+  sh=(h or 1)*8  --sprite height
 
-	sn = s
-	sx, sy = (sn % 16) * 8, (sn \ 16) * 8
- x0=flr(0.5*sw)
- y0=flr(0.5*sh)
- a=a/360
- sa=sin(a)
- ca=cos(a)
- for ix=0,sw-1 do
-  for iy=0,sh-1 do
-   dx=ix-x0
-   dy=iy-y0
-   xx=flr(dx*ca-dy*sa+x0)
-   yy=flr(dx*sa+dy*ca+y0)
-   if (xx>=0 and xx<sw and yy>=0 and yy<=sh) then
-   	c = sget(sx+xx,sy+yy)
-   	if (c > 0) then
-     pset(x+ix,y+iy,sget(sx+xx,sy+yy))
+  sn = s
+  sx, sy = (sn % 16) * 8, (sn \ 16) * 8
+  x0=flr(0.5*sw)
+  y0=flr(0.5*sh)
+  a=a/360
+  sa=sin(a)
+  ca=cos(a)
+  for ix=0,sw-1 do
+    for iy=0,sh-1 do
+      dx=ix-x0
+      dy=iy-y0
+      xx=flr(dx*ca-dy*sa+x0)
+      yy=flr(dx*sa+dy*ca+y0)
+      if (xx>=0 and xx<sw and yy>=0 and yy<=sh) then
+        c = sget(sx+xx,sy+yy)
+        if (c > 0) then
+          pset(x+ix,y+iy,sget(sx+xx,sy+yy))
+        end
+      end
     end
-   end
   end
- end
 end
-
 
 function drawhumanoid(actor,sprindex,ox,oy)
-	ox = ox or 0
-	oy = oy or 0
-	if(actor.dead == true) then
-		pal(0,8)
-		rspr(1,actor.x-4+ox,actor.y+7+oy,-89,1,1)
-		rspr(1,actor.x+4+ox,actor.y,-89+oy,1,3)
-		pal()
-		return
-	end
+  ox = ox or 0
+  oy = oy or 0
+  if(actor.dead == true) then
+    pal(0,8)
+    rspr(1,actor.x-4+ox,actor.y+7+oy,-89,1,1)
+    rspr(1,actor.x+4+ox,actor.y,-89+oy,1,3)
+    pal()
+    return
+  end
 
-	if (actor.iframes > 0 and ox == 0) then
-		for i=1, 16 do
-			pal(i,(i+actor.iframes)%16)
-		end
-	end
+  if (actor.iframes > 0 and ox == 0) then
+    for i=1, 16 do
+      pal(i,(i+actor.iframes)%16)
+    end
+  end
 
+  if (actor.onladder == true) then
+    -- head
+    spr(108+sprindex+(actor.y/4 % 2),ox+actor.x+actor.dir*-1,oy+actor.y,1,1,actor.dir!=1)
+    -- body
+    spr(108+sprindex+16+(actor.y/4 % 2),ox+actor.x+actor.dir*-1,oy+actor.y+8,1,1,actor.dir!=1)
+  else
+    -- head
+    spr(sprindex,ox+actor.x+actor.dir*-1,oy+actor.y,1,1,actor.dir!=1)
+    -- body
+    spr(sprindex+16+(actor.walk/4 % 3),ox+actor.x+actor.dir*-1,oy+actor.y+8,1,1,actor.dir!=1)
+  end
 
-	if (actor.onladder == true) then
-	-- head
-	spr(108+sprindex+(actor.y/4 % 2),ox+actor.x+actor.dir*-1,oy+actor.y,1,1,actor.dir!=1)
-	-- body
-	spr(108+sprindex+16+(actor.y/4 % 2),ox+actor.x+actor.dir*-1,oy+actor.y+8,1,1,actor.dir!=1)
-	else
-	-- head
-	spr(sprindex,ox+actor.x+actor.dir*-1,oy+actor.y,1,1,actor.dir!=1)
-	-- body
-	spr(sprindex+16+(actor.walk/4 % 3),ox+actor.x+actor.dir*-1,oy+actor.y+8,1,1,actor.dir!=1)
-	end
+  if (actor.iframes > 0 and ox == 0) then
+    pal()
+  end
 
-	if (actor.iframes > 0 and ox == 0) then
-		pal()
-	end
-	
- -- weapon
- if (actor.dir == 1) weapoffs = 8
- if (actor.dir == -1) weapoffs = 8
+  -- weapon
+  if (actor.dir == 1) weapoffs = 8
+  if (actor.dir == -1) weapoffs = 8
 
-	-- weapon idle
-	if (actor.attack == 0) then
+  -- weapon idle
+  if (actor.attack == 0) then
 
-		if actor.weapon > 0 then
-			spr(actor.weapon,ox+actor.x+weapoffs*actor.dir+actor.dir*-1,oy+actor.y,1,2,actor.dir!=1)
-		end
-	else
-	 -- weapon strike
-		if (actor.attack > 0 and actor.attack < 3) then
-			weapoffs-=3
-			weapoffs+=actor.attack
-		else
-			weapoffs+=(3-actor.attack)
-		end
+    if actor.weapon > 0 then
+      spr(actor.weapon,ox+actor.x+weapoffs*actor.dir+actor.dir*-1,oy+actor.y,1,2,actor.dir!=1)
+    end
+  else
+    -- weapon strike
+    if (actor.attack > 0 and actor.attack < 3) then
+      weapoffs-=3
+      weapoffs+=actor.attack
+    else
+      weapoffs+=(3-actor.attack)
+    end
 
-	 if (actor.dir == -1) weapoffs += 8
-		
-		if actor.weapon > 0 and actor.spell == false then
-			spr(actor.weapon+2,ox+actor.x+weapoffs*actor.dir+actor.dir*-1,oy+actor.y+cos(actor.attack/8+time())*2,2,2,actor.dir!=1)
-		end
+    if (actor.dir == -1) weapoffs += 8
 
-		if actor.spell == true then
-		 ex = 0
-			if (player.dir == -1) then
-				ex = 8
-			end
-			spr(actor.weapon,ex+ox+actor.x+weapoffs*actor.dir+actor.dir*-1,oy+actor.y+cos(actor.attack/100+time()*0.01)*2,1,2,actor.dir!=1)
-		end
+    if actor.weapon > 0 and actor.spell == false then
+      spr(actor.weapon+2,ox+actor.x+weapoffs*actor.dir+actor.dir*-1,oy+actor.y+cos(actor.attack/8+time())*2,2,2,actor.dir!=1)
+    end
 
-	end
+    if actor.spell == true then
+      ex = 0
+      if (player.dir == -1) then
+        ex = 8
+      end
+      spr(actor.weapon,ex+ox+actor.x+weapoffs*actor.dir+actor.dir*-1,oy+actor.y+cos(actor.attack/100+time()*0.01)*2,1,2,actor.dir!=1)
+    end
 
-	if (ox == 0) then
-		pal()
-	end
+  end
 
+  if (ox == 0) then
+    pal()
+  end
 
-	-- hitbox
-	if (draw_hitbox == true) then
-		rect(actor.x,actor.y, actor.x+actor.w, actor.y+actor.h,10)
-		a = attack_hitbox
-		if (a.x) then
-		rect(a.x,a.y, a.x+a.w, a.y+a.h,15)
-		end
-	end
+  -- hitbox
+  if (draw_hitbox == true) then
+    rect(actor.x,actor.y, actor.x+actor.w, actor.y+actor.h,10)
+    a = attack_hitbox
+    if (a.x) then
+      rect(a.x,a.y, a.x+a.w, a.y+a.h,15)
+    end
+  end
 
---	print(player.hp,player.x,player.y-6,2)
+-- print(player.hp,player.x,player.y-6,2)
 
 end
-
-
 
 mx = 0
 
@@ -1374,54 +1347,54 @@ mapspeed = 2
 mapoffs = 0
 
 function approx_dist(dx,dy)
- local maskx,masky=dx>>31,dy>>31
- local a0,b0=(dx+maskx)^^maskx,(dy+masky)^^masky
- if a0>b0 then
-  return a0*0.9609+b0*0.3984
- end
- return b0*0.9609+a0*0.3984
+  local maskx,masky=dx>>31,dy>>31
+  local a0,b0=(dx+maskx)^^maskx,(dy+masky)^^masky
+  if a0>b0 then
+    return a0*0.9609+b0*0.3984
+  end
+  return b0*0.9609+a0*0.3984
 end
 
 function pd(x,y,x2,y2)
-	return approx_dist(x-x2,y-y2)	
+  return approx_dist(x-x2,y-y2)
 end
 
 function drawlevel()
-	mapframe+=1
-	if (mapframe > mapspeed) then
-		mapframe = 0
-		mapoffs += 1
-	end
+  mapframe+=1
+  if (mapframe > mapspeed) then
+    mapframe = 0
+    mapoffs += 1
+  end
 
-	-- parallax pattern
-	camera()
+  -- parallax pattern
+  camera()
 
-	for y=-2,14,2 do
-	for x=-2,16,2 do 
- 
- 	sx = flr((player.x-64)/8)+x
- 	sy = flr((player.y-64)/8)+y
+  for y=-2,14,2 do
+    for x=-2,16,2 do
 
- 	xo = -player.x/4%16
- 	yo = -player.y/32%16
+      sx = flr((player.x-64)/8)+x
+      sy = flr((player.y-64)/8)+y
 
-		dx=flr(xo+x*8)
-		dy=flr(yo+y*8)
-		if (sx >= -2 and sy >= -2) then
-		spr(46,dx,dy,2,2)
-		end
+      xo = -player.x/4%16
+      yo = -player.y/32%16
 
-		pal()
-	end
-	end
-	pal()
+      dx=flr(xo+x*8)
+      dy=flr(yo+y*8)
+      if (sx >= -2 and sy >= -2) then
+        spr(46,dx,dy,2,2)
+      end
 
-	camera(player.x-64,player.y-64)
+      pal()
+    end
+  end
+  pal()
 
-	drawspawners()
-	--solid and stairs
-	map(0,0,0,0,128,128,1)
-	map(0,0,0,0,128,128,6)
+  camera(player.x-64,player.y-64)
+
+  drawspawners()
+  --solid and stairs
+  map(0,0,0,0,128,128,1)
+  map(0,0,0,0,128,128,6)
 end
 
 function printc(s,y,c)
@@ -1448,48 +1421,48 @@ spelltime = 0
 spellframe=0
 
 function drawspell()
-	if (player.spellactive == true) then
-		spelltime+=1
-		if (spelltime > 4) then
-			spellframe+=1
-			spelltime = 0
-		end
-		if (spellframe > 1) then spellframe = 0 end
+  if (player.spellactive == true) then
+    spelltime+=1
+    if (spelltime > 4) then
+      spellframe+=1
+      spelltime = 0
+    end
+    if (spellframe > 1) then spellframe = 0 end
 
-		ofs = 0
-		oo = 0
-		if (player.spelldir == -1) then
-			ofs = 8
-			oo = 8
-		else
-			ofs = -8
-		end
+    ofs = 0
+    oo = 0
+    if (player.spelldir == -1) then
+      ofs = 8
+      oo = 8
+    else
+      ofs = -8
+    end
 
-		spr(103,oo+player.spellx,player.spelly,1,1,player.spelldir == -1)
-		spr(104+spellframe,oo+player.spellx-ofs,player.spelly,1,1,player.spelldir == -1)
-	end
+    spr(103,oo+player.spellx,player.spelly,1,1,player.spelldir == -1)
+    spr(104+spellframe,oo+player.spellx-ofs,player.spelly,1,1,player.spelldir == -1)
+  end
 end
 
-grad = { 10, 6, 9, 8, 4, 2,1,1,1,1,1,1,1,1,1,1,1,1,1} 
+grad = { 10, 6, 9, 8, 4, 2,1,1,1,1,1,1,1,1,1,1,1,1,1}
 
 function drawtorch()
- if (player.dead == true) return
+  if (player.dead == true) return
 
-	for y=player.y-4*2,player.y+20*2,2 do
-	for x=player.x-8*2,player.x+16*2,2 do
-		dd = pd(x,y,player.x+4,player.y+8)/0.08
-		cc = dd/(30+cos(time()*0.1+sin(time()*0.3)*0.5)*3)
+  for y=player.y-4*2,player.y+20*2,2 do
+    for x=player.x-8*2,player.x+16*2,2 do
+      dd = pd(x,y,player.x+4,player.y+8)/0.08
+      cc = dd/(30+cos(time()*0.1+sin(time()*0.3)*0.5)*3)
 
-		c = pget(x,y)
-		if (c == 1 or c == 2) pset(x,y,grad[cc & -1])
-		c = pget(x+1,y)
-		if (c == 1 or c == 2) pset(x+1,y,grad[cc & -1])
-		c = pget(x,y+1)
-		if (c == 1 or c == 2) pset(x,y+1,grad[cc & -1])
-		c = pget(x+1,y+1)
-		if (c == 1 or c == 2) pset(x+1,y+1,grad[cc & -1])
-	end
-	end
+      c = pget(x,y)
+      if (c == 1 or c == 2) pset(x,y,grad[cc & -1])
+      c = pget(x+1,y)
+      if (c == 1 or c == 2) pset(x+1,y,grad[cc & -1])
+      c = pget(x,y+1)
+      if (c == 1 or c == 2) pset(x,y+1,grad[cc & -1])
+      c = pget(x+1,y+1)
+      if (c == 1 or c == 2) pset(x+1,y+1,grad[cc & -1])
+    end
+  end
 
 end
 
@@ -1499,411 +1472,407 @@ function pad(string,length)
 end
 
 function print_o(text,x,y,c)
-		print(text,x,y-1,0)
-		print(text,x,y+1,0)
-		print(text,x-1,y,0)
-		print(text,x+1,y,0)
-		print(text,x,y,c)
+  print(text,x,y-1,0)
+  print(text,x,y+1,0)
+  print(text,x-1,y,0)
+  print(text,x+1,y,0)
+  print(text,x,y,c)
 
 end
 
 function drawdmg()
-	camera(player.x-64,player.y-64)
- r = {}
-	for i,d in ipairs(dmgs) do
-		if (d.frames >= 0) then
-			oy = cos(i*0.1)*4
-			print_o(flr(d.n),d.x+12,oy+-1+d.y-cos(d.frames*0.04)*4,8+(16-d.frames)*0.2)
-			d.frames-=1
-			if (d.frames == 0) then
-				add(r,i)
-			end
-		end
-	end
-	
-	for dd in all(r) do
-		deli(dmgs,dd)
-	end
+  camera(player.x-64,player.y-64)
+  r = {}
+  for i,d in ipairs(dmgs) do
+    if (d.frames >= 0) then
+      oy = cos(i*0.1)*4
+      print_o(flr(d.n),d.x+12,oy+-1+d.y-cos(d.frames*0.04)*4,8+(16-d.frames)*0.2)
+      d.frames-=1
+      if (d.frames == 0) then
+        add(r,i)
+      end
+    end
+  end
+
+  for dd in all(r) do
+    deli(dmgs,dd)
+  end
 end
 
 function drawhealing()
-	camera(player.x-64,player.y-64)
- r = {}
-	
-	for i,d in ipairs(heals) do
-		if (d.frames >= 0) then
-			oy = cos(i*0.1)*4
-			co = 8
-			if (d.k == 1) then
-				co = 10
-			end
-			print_o("+"..flr(d.n),d.x+12,oy+-1+d.y-cos(d.frames*0.04)*4,co)
-			d.frames-=1
-			if (d.frames == 0) then
-				add(r,i)
-			end
-		end
-	end
+  camera(player.x-64,player.y-64)
+  r = {}
 
-	for dd in all(r)	do
-		deli(heals,dd)
-	end
+  for i,d in ipairs(heals) do
+    if (d.frames >= 0) then
+      oy = cos(i*0.1)*4
+      co = 8
+      if (d.k == 1) then
+        co = 10
+      end
+      print_o("+"..flr(d.n),d.x+12,oy+-1+d.y-cos(d.frames*0.04)*4,co)
+      d.frames-=1
+      if (d.frames == 0) then
+        add(r,i)
+      end
+    end
+  end
+
+  for dd in all(r) do
+    deli(heals,dd)
+  end
 end
 
-		names = { "red snapper", "brass cleaver", "golden long" }
-		prices = { 100, 150, 500 }
-		armor = {4,13,12,9,11,10,8,2,3,5,6,7,14,15,0}
+names = { "red snapper", "brass cleaver", "golden long" }
+prices = { 100, 150, 500 }
+armor = {4,13,12,9,11,10,8,2,3,5,6,7,14,15,0}
 
 function drawui()
-	camera()
-	rectfill(0,120,128,128,0)
+  camera()
+  rectfill(0,120,128,128,0)
 
-	--stamina
-	for i=player.maxst,1,-5 do
+  --stamina
+  for i=player.maxst,1,-5 do
 
-		
-	 if (i > player.st) then
-		pset(16+(i/10-1)*4,7,3)	
-		pset(17+(i/10-1)*4,7,3)	
-		else
-		pset(16+(i/10-1)*4,7,11)	
-		pset(17+(i/10-1)*4,7,11)	
-		end
-	end
-	
-	--hp
-	for i=1,player.maxhp,5 do
-		h = "█"
-		e = "…"
-	
-	 if (i <= player.hp) then
-			print(h,8+(i/10-1)*4,-4,8)
-		else
-			print(h,8+(i/10-1)*4,-4,2)
-		end
-	end
+    if (i > player.st) then
+      pset(16+(i/10-1)*4,7,3)
+      pset(17+(i/10-1)*4,7,3)
+    else
+      pset(16+(i/10-1)*4,7,11)
+      pset(17+(i/10-1)*4,7,11)
+    end
+  end
 
-	spr(34,0,0,1,1)
-	spr(35,50,0,1,1)
+  --hp
+  for i=1,player.maxhp,5 do
+    h = "█"
+    e = "…"
 
-	xo = 0+cos(time()*0.1)+sin(time()*0.133)*3
-	yo = 2+sin(time()*0.1)+cos(time()*0.15)*2
-	yo2 = 2+sin(0.1+time()*0.1)+cos(time()*0.15)*2
-	yo3 = 2+sin(0.2+time()*0.1)+cos(time()*0.15)*2
+    if (i <= player.hp) then
+      print(h,8+(i/10-1)*4,-4,8)
+    else
+      print(h,8+(i/10-1)*4,-4,2)
+    end
+  end
 
-	spr(11,xo+127-42,yo+-1)
-	spr(57,xo+127-40,yo2+0)
-	spr(11,xo+127-32,yo3+-1)
-	spr(11,xo+127-24,yo2+-2)
-	spr(9,xo+127-16,yo+-2)
-	spr(11,xo+127-8,yo2+-1)
+  spr(34,0,0,1,1)
+  spr(35,50,0,1,1)
 
-	palt(0,false)
-	spr(25,127-22,0,3,1)
-		
-	print("key:"..pad(""..player.keys,2),45,122,10)
-	print("soul:"..pad(""..player.souls,3),71,122,12)
-	print("     lvl:" ..pad(""..player.level,2),85,122,7)
+  xo = 0+cos(time()*0.1)+sin(time()*0.133)*3
+  yo = 2+sin(time()*0.1)+cos(time()*0.15)*2
+  yo2 = 2+sin(0.1+time()*0.1)+cos(time()*0.15)*2
+  yo3 = 2+sin(0.2+time()*0.1)+cos(time()*0.15)*2
 
-	dmg = getattackpower()
+  spr(11,xo+127-42,yo+-1)
+  spr(57,xo+127-40,yo2+0)
+  spr(11,xo+127-32,yo3+-1)
+  spr(11,xo+127-24,yo2+-2)
+  spr(9,xo+127-16,yo+-2)
+  spr(11,xo+127-8,yo2+-1)
 
-	palt(0,true)
-	for i=0,dmg-1,1 do
-		spr(108,0,8+(i/2)*8)
-	end
+  palt(0,false)
+  spr(25,127-22,0,3,1)
 
-	local s="attack"
-	local s2="spell"
+  print("key:"..pad(""..player.keys,2),45,122,10)
+  print("soul:"..pad(""..player.souls,3),71,122,12)
+  print("     lvl:" ..pad(""..player.level,2),85,122,7)
 
-	for i=1,#s do
-		print(sub(s,i,i),2,8+(i/2)*22,1)
-		print(sub(s,i,i),3,8+(i/2)*22,12)
-	end
+  dmg = getattackpower()
 
-	for i=0,player.spelltime,20 do
-		spr(54,120,8+(i/20)*4)
-	end
+  palt(0,true)
+  for i=0,dmg-1,1 do
+    spr(108,0,8+(i/2)*8)
+  end
 
-	for i=1,#s2 do
-		print(sub(s2,i,i),122,8+(i/2)*22,1)
-		print(sub(s2,i,i),123,8+(i/2)*22,7)
-	end
+  local s="attack"
+  local s2="spell"
 
-	palt()
-	pal()
+  for i=1,#s do
+    print(sub(s,i,i),2,8+(i/2)*22,1)
+    print(sub(s,i,i),3,8+(i/2)*22,12)
+  end
 
-	if shopmode == 1 then 
-		--top
-		dialog("[bunbun exports employee]","welcome to my shop",0,7)
+  for i=0,player.spelltime,20 do
+    spr(54,120,8+(i/20)*4)
+  end
 
-		--item
-		itemname = names[shopitem+1]
-		price = prices[shopitem+1]		
-		dialog(itemname,"only " .. price .. " souls for you my friend",20,8)
-		camera(player.x-64,player.y-64)
+  for i=1,#s2 do
+    print(sub(s2,i,i),122,8+(i/2)*22,1)
+    print(sub(s2,i,i),123,8+(i/2)*22,7)
+  end
 
-		
-		rectfill(shopitempos.x,shopitempos.y,shopitempos.x+16,shopitempos.y+64,0)
-		
-		pal(12,armor[1+flr(player.level/2)])
-		yo = 16*shopitem
-		sspr(9*8,16,8,8,shopitempos.x-16,yo+shopitempos.y+cos(time()*1)*2,16+cos(time()*1)*2,16+sin(time()*0.5)*2)
+  palt()
+  pal()
 
-		for i=0,shopitemmax do
-			pal(10,i+8)
-			if (i == shopitem) then
-				sspr(10*8,0,8,8,shopitempos.x-cos(time()*1)*2,16*i+shopitempos.y-sin(time()*1)*2,16+cos(time()*1)*2,16+sin(time()*1)*2)
-			else
-				sspr(10*8,0,8,8,shopitempos.x,16*i+shopitempos.y,16,16)
-			end
-		end
-		pal()
-		camera()
-	end
-	
-	--roomname
-	--printc("in the court of crimson king",123,14)
-	
+  if shopmode == 1 then
+    --top
+    dialog("[bunbun exports employee]","welcome to my shop",0,7)
+
+    --item
+    itemname = names[shopitem+1]
+    price = prices[shopitem+1]
+    dialog(itemname,"only " .. price .. " souls for you my friend",20,8)
+    camera(player.x-64,player.y-64)
+
+    rectfill(shopitempos.x,shopitempos.y,shopitempos.x+16,shopitempos.y+64,0)
+
+    pal(12,armor[1+flr(player.level/2)])
+    yo = 16*shopitem
+    sspr(9*8,16,8,8,shopitempos.x-16,yo+shopitempos.y+cos(time()*1)*2,16+cos(time()*1)*2,16+sin(time()*0.5)*2)
+
+    for i=0,shopitemmax do
+      pal(10,i+8)
+      if (i == shopitem) then
+        sspr(10*8,0,8,8,shopitempos.x-cos(time()*1)*2,16*i+shopitempos.y-sin(time()*1)*2,16+cos(time()*1)*2,16+sin(time()*1)*2)
+      else
+        sspr(10*8,0,8,8,shopitempos.x,16*i+shopitempos.y,16,16)
+      end
+    end
+    pal()
+    camera()
+  end
+
+--roomname
+--printc("in the court of crimson king",123,14)
 
 end
-
 
 itt = 0
 ifr = 0
 function drawitems()
-	itt+=1
-	if itt > 8 then
-		itt = 0
-		ifr +=1
-	end
+  itt+=1
+  if itt > 8 then
+    itt = 0
+    ifr +=1
+  end
 
-	for it in all(items) do
-		if (it.tt == item_heart) then
-			spr(96+ifr%3,it.x,it.y)
-		end
-		if (it.tt == item_key) then
-			spr(36,it.x,it.y-8,1,2)
-		end
-	end
+  for it in all(items) do
+    if (it.tt == item_heart) then
+      spr(96+ifr%3,it.x,it.y)
+    end
+    if (it.tt == item_key) then
+      spr(36,it.x,it.y-8,1,2)
+    end
+  end
 end
 
 sintab = {}
 costab = {}
 
 function inittab()
-	for a=0,360,6 do
+  for a=0,360,6 do
 
-	 local ray={
-	   angle=a/360,
-	 }
-	 -- rays
-  local step_x = cos(ray.angle)
-  local step_y = sin(ray.angle)
-  costab[a+1] = step_x
-  sintab[a+1] = step_y
-	end
+    local ray={
+      angle=a/360,
+    }
+    -- rays
+    local step_x = cos(ray.angle)
+    local step_y = sin(ray.angle)
+    costab[a+1] = step_x
+    sintab[a+1] = step_y
+  end
 end
 
 pchangex = -1
 updateframes = 0
 
 function updateshadow()
-	plx = flr((player.x)/8)
-	ply = flr((player.y)/8)
+  plx = flr((player.x)/8)
+  ply = flr((player.y)/8)
 
- px=plx
- py=ply
+  px=plx
+  py=ply
 
-	if (pchangex == px and pchangey == py) then
-		updateframes=0
-	 return
-	end 
+  if (pchangex == px and pchangey == py) then
+    updateframes=0
+    return
+  end
 
-	updateframes+=1
+  updateframes+=1
 
-	pchangex = px
-	pchangey = py
+  pchangex = px
+  pchangey = py
 
-	ray_step=1
-	memset(0x8000,112,512)
+  ray_step=1
+  memset(0x8000,112,512)
 
-	for a=0,360,6 do
-	
-	 local ray={
-	   x = px,
-	   y = py,
-	   angle=a/360,
-	 }
-	 -- rays
-  local step_x = costab[a+1]*ray_step
-  local step_y = sintab[a+1]*ray_step 
+  for a=0,360,6 do
 
-  local tile=0
-  local distance=0
+    local ray={
+      x = px,
+      y = py,
+      angle=a/360,
+    }
+    -- rays
+    local step_x = costab[a+1]*ray_step
+    local step_y = sintab[a+1]*ray_step
 
-  -- reset ray start point
-  ray.x = plx
-  ray.y = ply
+    local tile=0
+    local distance=0
 
-  local distance=0
-  -- cast a ray across the
-  -- world map
-		local distbail = false
-  repeat
-   -- march the ray
-   ray.x+=step_x       
-   ray.y+=step_y
-   distance+=ray_step
-   if (distance > 8) then distbail = true end
-   -- get tile at ray position
-			tile = mget(flr(ray.x),flr(ray.y))
-			flag = fget(tile,0)
-	 until(flag==true or distbail==true)
+    -- reset ray start point
+    ray.x = plx
+    ray.y = ply
 
-		if(distbail == false and distance > 1) then
-			 ray.x+=step_x
-			 ray.y+=step_y
+    local distance=0
+    -- cast a ray across the
+    -- world map
+    local distbail = false
+    repeat
+      -- march the ray
+      ray.x+=step_x
+      ray.y+=step_y
+      distance+=ray_step
+      if (distance > 8) then distbail = true end
+      -- get tile at ray position
+      tile = mget(flr(ray.x),flr(ray.y))
+      flag = fget(tile,0)
+    until(flag==true or distbail==true)
 
-			for i=0,7 do
-	   xi = flr(ray.x)-plx+8
-	   yi = flr(ray.y)-ply+9
-			 ray.x+=step_x
-			 ray.y+=step_y
+    if(distbail == false and distance > 1) then
+      ray.x+=step_x
+      ray.y+=step_y
 
-				dv = peek(0x8000+(yi*16)+xi)
-				dv+=2
-				if (dv > 124) then dv = 124 end
-				poke(0x8000+(yi*16)+xi,dv)
+      for i=0,7 do
+        xi = flr(ray.x)-plx+8
+        yi = flr(ray.y)-ply+9
+        ray.x+=step_x
+        ray.y+=step_y
 
-			end
-		end
- end
+        dv = peek(0x8000+(yi*16)+xi)
+        dv+=2
+        if (dv > 124) then dv = 124 end
+        poke(0x8000+(yi*16)+xi,dv)
+
+      end
+    end
+  end
 end
 
 of = 0
 function drawshadow()
 
-	palt(1,true)
-	palt(0,false)
+  palt(1,true)
+  palt(0,false)
 
-	pdd = 0
-	if (player.dir == -1) then
-		pdd = 8
-	end
-	
-	xo = (player.x%8)-pdd
-	yo = player.y%8
+  pdd = 0
+  if (player.dir == -1) then
+    pdd = 8
+  end
 
- -- map to 0x80
-	poke(0x5f56, 0x80)
-	--alt map width
-	poke(0x5f57, 16)
+  xo = (player.x%8)-pdd
+  yo = player.y%8
 
-	-- draw shadowmap
-	map(0,0,player.x-64-xo,player.y-64-yo,16,16)
+  -- map to 0x80
+  poke(0x5f56, 0x80)
+  --alt map width
+  poke(0x5f57, 16)
 
-	-- reset default map addr
-	poke(0x5f56, 0x20)
-	--default map width
-	poke(0x5f57, 128)
+  -- draw shadowmap
+  map(0,0,player.x-64-xo,player.y-64-yo,16,16)
 
-	palt()
-	camera()
+  -- reset default map addr
+  poke(0x5f56, 0x20)
+  --default map width
+  poke(0x5f57, 128)
+
+  palt()
+  camera()
 end
 
 fadepal={12,14,8,13,3,4,5,2,1,0}
 
 function _draw()
-	cls(0)
-	if (intro == 2) then
-		ff = 1+(8-abs(flr(player.y*0.02)))
-		if (ff > 10) ff = 10
-		if (ff < 1) ff = 1
-		
-		if (player.y < 0) rectfill(0,0,128,128,fadepal[ff])
+  cls(0)
+  if (intro == 2) then
+    ff = 1+(8-abs(flr(player.y*0.02)))
+    if (ff > 10) ff = 10
+    if (ff < 1) ff = 1
 
-		camera(player.x-64,player.y-64)		
-		if (player.y > -256) then
-		pal(7,flr(player.y*0.01))
-		end
-		for i=1,13,1 do
-		spr(106, -time()*10+32+cos((i*32.0)*0.01)*32,-500+i*32+rndr[i],2,1)
-		end
-		pal()
-		
-	end
-	drawlevel()	
-	drawdoors()
+    if (player.y < 0) rectfill(0,0,128,128,fadepal[ff])
 
-	-- shadow
-	for i=1,16 do
-		pal(i,0)
-	end
+    camera(player.x-64,player.y-64)
+    if (player.y > -256) then
+      pal(7,flr(player.y*0.01))
+    end
+    for i=1,13,1 do
+      spr(106, -time()*10+32+cos((i*32.0)*0.01)*32,-500+i*32+rndr[i],2,1)
+    end
+    pal()
 
-	drawhumanoid(player,1,-1,-1)
-	drawhumanoid(player,1,1,-1)
-	drawhumanoid(player,1,0,1)
-	
---	print(stat(0),player.x-32,player.y-8,0)
---	print(stat(0),player.x+1-32,player.y-7,7)
-	pal()
-	-- actual
-	-- level armor colors
-	armor = {4,13,12,9,11,10,8}
-	pal(12,armor[1+flr(player.level/2)])
-	drawhumanoid(player,1)
+  end
+  drawlevel()
+  drawdoors()
 
-	if (intro == 0) then
-	drawenemies()
-	drawitems()
-	drawtorch()
-	drawspell()
-	drawshadow()
-	drawdmg()
-	drawhealing()
-	end
-	camera()
+  -- shadow
+  for i=1,16 do
+    pal(i,0)
+  end
 
-	if (gameover == 1) then
-		rectfill(0,120,128,128,0)
-		printc("*** gam➡️ 🅾️ver ***",122,5)
-		printc("*** gam➡️ 🅾️ver ***",123,8)
-		stop()
-	end
+  drawhumanoid(player,1,-1,-1)
+  drawhumanoid(player,1,1,-1)
+  drawhumanoid(player,1,0,1)
 
-	if (gameover == 2) then
-		rectfill(0,120,128,128,0)
-		printc("success! found the exit!",122,5)
-		printc("success! found the exit!",123,10)
-		stop()
-	end
+  -- print(stat(0),player.x-32,player.y-8,0)
+  -- print(stat(0),player.x+1-32,player.y-7,7)
+  pal()
+  -- actual
+  -- level armor colors
+  armor = {4,13,12,9,11,10,8}
+  pal(12,armor[1+flr(player.level/2)])
+  drawhumanoid(player,1)
 
-		rectfill(0,0,128,8,0)
-		rectfill(0,0,8,128,0)
-		rectfill(120,0,128,128,0)
-	
-	if (intro == 1) then
-		for y=15,22 do
-			o = cos(y+time()*0.3)*2
-			o2 = cos((y+0.05)+time()*0.3)*2			
-			o3 = cos((y+0.1)+time()*0.3)*3			
-			printc2("errand knight",flr(o),5,2)
-			printc2("errand knight",flr(o2),5,9)
-			printc2("errand knight",flr(o3),5,10)
-			printc3("       a mini \^t\^wrpg\^-t\^-w by visy",18,5)
-			printc3("       a mini \^t\^wrpg\^-t\^-w by visy",19,8)
-			print  ("                      pumpuli",1,27,5)
-			print  ("                      pumpuli",1,28,8)
-		end
-	end
+  if (intro == 0) then
+    drawenemies()
+    drawitems()
+    drawtorch()
+    drawspell()
+    drawshadow()
+    drawdmg()
+    drawhealing()
+  end
+  camera()
 
-	if (player.y >= 0 and intro == 2) then intro = 1 end
-	if (player.y > 24 and intro == 1) then intro = 0 end
-	
-	if (intro == 0) then
-		drawui()
+  if (gameover == 1) then
+    rectfill(0,120,128,128,0)
+    printc("*** gam➡️ 🅾️ver ***",122,5)
+    printc("*** gam➡️ 🅾️ver ***",123,8)
+    stop()
+  end
 
-	end
+  if (gameover == 2) then
+    rectfill(0,120,128,128,0)
+    printc("success! found the exit!",122,5)
+    printc("success! found the exit!",123,10)
+    stop()
+  end
+
+  rectfill(0,0,128,8,0)
+  rectfill(0,0,8,128,0)
+  rectfill(120,0,128,128,0)
+
+  if (intro == 1) then
+    for y=15,22 do
+      o = cos(y+time()*0.3)*2
+      o2 = cos((y+0.05)+time()*0.3)*2
+      o3 = cos((y+0.1)+time()*0.3)*3
+      printc2("errand knight",flr(o),5,2)
+      printc2("errand knight",flr(o2),5,9)
+      printc2("errand knight",flr(o3),5,10)
+      printc3("       a mini \^t\^wrpg\^-t\^-w by visy",18,5)
+      printc3("       a mini \^t\^wrpg\^-t\^-w by visy",19,8)
+      print  ("                      pumpuli",1,27,5)
+      print  ("                      pumpuli",1,28,8)
+    end
+  end
+
+  if (player.y >= 0 and intro == 2) then intro = 1 end
+  if (player.y > 24 and intro == 1) then intro = 0 end
+
+  if (intro == 0) then
+    drawui()
+
+  end
 
 end
 __gfx__
