@@ -125,7 +125,7 @@ tilesets = { 0,1,2,3,0,0,0,0,
 
 function initmap()
   -- copy map to 0x8000
-  --memcpy(0x8000,0x2000,8192)
+  memcpy(0x8000,0x2000,8192)
 
   offs = 0
   xo=0
